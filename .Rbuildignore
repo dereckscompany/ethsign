@@ -12,3 +12,14 @@
 ^local$
 ^dev$
 ^scripts$
+^README\.Rmd$
+^README\.html$
+^\.cruft\.json$
+^\.lintr$
+^air\.toml$
+^\.Rprofile$
+^cran-comments\.md$
+^doc$
+^Meta$
+^.*\.tar\.gz$
+^.*\.Rcheck$

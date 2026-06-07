@@ -1,14 +1,65 @@
 url: https://dereckscompany.github.io/ethsign/
 
+figures:
+  fig.path: "man/figures/"
+
+authors:
+  Dereck Mezquita:
+    href: https://derecksnotes.com
+
 template:
   bootstrap: 5
 
 navbar:
   structure:
-    left: [intro, reference, articles]
-    right: [search, github]
+    left: [home, reference, articles]
+    right: [github, search]
   components:
     github:
-      icon: fa-github
+      icon: fa-github fa-lg
       href: https://github.com/dereckscompany/ethsign
-      aria-label: GitHub repository
+      target: _blank
+
+reference:
+  - title: Signer
+    desc: The local wallet signer object and its constructors
+    contents:
+      - EthSigner
+      - eth_signer
+      - eth_signer_random
+
+  - title: Hashing & EIP-712
+    desc: Keccak-256 hashing and EIP-712 typed-data digests
+    contents:
+      - keccak256
+      - eip712_digest
+
+  - title: Keys & Addresses
+    desc: Private-key generation and Ethereum address derivation
+    contents:
+      - eth_keygen
+      - eth_address
+
+  - title: Signatures
+    desc: The canonical signature object and its two wire serializations
+    contents:
+      - eth_signature
+      - as_rsv
+      - as_hex
+      - print.eth_signature
+
+  - title: Verification
+    desc: Recover the signing address from a signature
+    contents:
+      - ecrecover
+
+  - title: Contracts & Validators
+    desc: Generated roxyassert type validators
+    contents:
+      - assert_type_eth_signature
+
+articles:
+  - title: Getting Started
+    navbar: ~
+    contents:
+      - getting-started

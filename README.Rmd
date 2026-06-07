@@ -2,106 +2,191 @@
 output: github_document
 ---
 
-```{r, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
     warning = FALSE,
     message = FALSE,
     fig.path = "./man/figures/README-",
     fig.align = "center",
-    fig.width = 12,
-    fig.height = 10,
-    dpi = 150,
     collapse = TRUE,
     comment = "#>"
 )
+
+# Every example below runs at render time. Signing is OFFLINE and deterministic
+# (RFC 6979), so the document executes with no network, no funds, and no chain
+# connection -- the printed signatures are the real, reproducible output.
+library(ethsign)
 ```
 
 # ethsign
 
-Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 ECDSA with Ethereum recovery id and low-s, EIP-712 typed-data signing, and address derivation. The cryptographic primitives needed to authenticate and sign orders on EVM venues such as Hyperliquid and Polymarket.
+Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
+secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation, EIP-712
+typed-data signing, EIP-191 `personal_sign`, and address derivation. These are
+the cryptographic primitives needed to authenticate and sign orders on EVM
+venues such as Hyperliquid and Polymarket, with no native dependencies beyond
+`gmp` and `openssl`.
 
-## Features
+> **A note on responsibility.** This package handles private keys and produces
+> signatures that can authorize real transactions. You are responsible for how
+> you use it and for keeping your keys safe.
 
-| Feature | Description |
-|---------|-------------|
-| **testthat** | Unit testing framework with separate test files |
-| **roxygen2** | Documentation generation from code comments |
-| **pkgdown** | Automatic documentation website |
-| **renv** | Reproducible dependency management |
-| **GitHub Actions** | CI/CD for R-CMD-check and pkgdown deployment |
-| **air** | Extremely fast R code formatter (Rust-based) |
+## What this is — and what it is NOT
 
-## Project Structure
+`ethsign` is the signing **maths** plus a small signer object that holds a key
+in memory. That is the whole scope.
 
-```
-├── R/                     # Package source
-├── tests/testthat/        # Unit tests
-├── vignettes/             # Package vignettes
-├── scripts/
-│   └── BUILD.sh           # Build automation script
-├── .github/workflows/     # CI/CD workflows
-└── _pkgdown.yml           # Documentation site config
-```
+It is **NOT** a wallet application. It does not:
 
-## Build Commands
+- hold or move funds,
+- read balances,
+- connect to any chain or RPC node,
+- broadcast, submit, or track transactions.
 
-```bash
-# Full workflow: document → clean → build → check → install
-./scripts/BUILD.sh all
+It **does**:
 
-# Quick development iteration (skip R CMD check)
-./scripts/BUILD.sh quick
+- derive an Ethereum address from a private key,
+- hash data with keccak-256,
+- build the EIP-712 typed-data digest,
+- produce a canonical `(r, s, v)` ECDSA signature, deterministically, and
+- recover the signing address from a signature (`ecrecover`).
 
-# Generate documentation only
-./scripts/BUILD.sh document
-
-# Format R code with air
-./scripts/FORMAT.sh
-
-# Check formatting (for CI)
-./scripts/FORMAT.sh check
-
-# Build pkgdown site
-./scripts/BUILD.sh pkgdown
-
-# Render README.Rmd to README.md
-./scripts/BUILD.sh readme
-
-# See all options
-./scripts/BUILD.sh help
-```
-
-## Usage
-
-```r
-library(ethsign)
-```
+What you do with the resulting signature -- post it to a venue, embed it in a
+raw transaction, present it as a login -- is up to you and your other tooling.
 
 ## Installation
 
-```r
-# From GitHub
+```{r install, eval = FALSE}
 # install.packages("remotes")
 remotes::install_github("dereckscompany/ethsign")
-
-# From CRAN (when available)
-install.packages("ethsign")
 ```
 
-### Requirements
+## Quick start
 
-- R >= 4.0
-- [air](https://posit-dev.github.io/air/) for code formatting (optional)
+Every block below is executed at render time against no network. We use the
+well-known `0x0123…0123` test key (the canonical eth_account / Hyperliquid
+example key) so the output is reproducible; in real use, read your key from the
+`ETH_PRIVATE_KEY` environment variable (`eth_signer()` with no argument) or
+generate a throwaway one with `eth_signer_random()`.
 
-## CI/CD
+### Create a signer
 
-GitHub Actions workflows included:
+```{r signer}
+signer <- eth_signer(
+    "0x0123456789012345678901234567890123456789012345678901234567890123"
+)
 
-- **R-CMD-check**: Tests on macOS, Windows, Ubuntu with multiple R versions
-- **pkgdown**: Builds and deploys documentation to GitHub Pages
+# The address is derived from the key; the private key is never printed.
+signer$address
+signer
+```
 
-Both workflows use `concurrency` to cancel in-progress runs when new commits are pushed.
+### Sign EIP-712 typed data
+
+A single struct over atomic field types is all most venues need. Here is a
+Hyperliquid `usdSend` user action (an exact reproduction of the official
+Hyperliquid Python SDK testnet vector):
+
+```{r typed-data}
+domain <- list(
+    name = "HyperliquidSignTransaction",
+    version = "1",
+    chainId = 421614,
+    verifyingContract = "0x0000000000000000000000000000000000000000"
+)
+
+types <- list(
+    list(name = "hyperliquidChain", type = "string"),
+    list(name = "destination", type = "string"),
+    list(name = "amount", type = "string"),
+    list(name = "time", type = "uint64")
+)
+
+message <- list(
+    hyperliquidChain = "Testnet",
+    destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
+    amount = "1",
+    time = 1687816341423
+)
+
+sig <- signer$sign_typed_data(domain, "HyperliquidTransaction:UsdSend", types, message)
+sig
+```
+
+### Two wire formats
+
+The same signature serializes to either venue convention:
+
+```{r serialize}
+# {r, s, v} object form, e.g. Hyperliquid
+as_rsv(sig)
+
+# 65-byte concatenated hex r || s || v, e.g. Polymarket
+as_hex(sig)
+```
+
+### Verify with `ecrecover`
+
+Recompute the digest, recover the address, and confirm it is the signer's --
+the inverse check that any venue (or you) can run on a signature:
+
+```{r recover}
+digest <- eip712_digest(domain, "HyperliquidTransaction:UsdSend", types, message)
+rsv <- as_rsv(sig)
+
+ecrecover(digest, rsv$r, rsv$s, rsv$v) == signer$address
+```
+
+### Hashing and addresses
+
+```{r hashing}
+# keccak-256 of a string (the empty-string Ethereum vector) or raw bytes
+keccak256("")
+keccak256(as.raw(c(0x12, 0x34)))
+
+# derive an address from a key without constructing a signer
+eth_address("0x0123456789012345678901234567890123456789012345678901234567890123")
+```
+
+### Sign a login message (SIWE)
+
+`$sign_message()` applies the EIP-191 `personal_sign` prefix -- the digest used
+by Sign-In with Ethereum and most "sign this message to log in" flows:
+
+```{r login}
+login <- "example.com wants you to sign in with your Ethereum account"
+msig <- signer$sign_message(login)
+as_hex(msig)
+```
+
+## Use cases
+
+The same `sign_typed_data` / `sign_message` / `sign_digest` primitives cover the
+EIP-712 and EIP-191 signing required by, among others:
+
+- **Hyperliquid** user actions (`usdSend`, `withdraw`, approve-agent, and other
+  user-signed actions) -- verified against the official SDK vectors.
+- **Polymarket** order signing (CLOB orders, the 65-byte hex form via
+  `as_hex()`).
+- **0x**, **CoW Protocol**, **1inch**, and **Seaport** (OpenSea) order/intent
+  signing.
+- **ERC-2612** and **Permit2** token permits.
+- **Gnosis Safe** transaction hashes.
+- **Sign-In with Ethereum** (SIWE) and generic `personal_sign` login messages.
+- **Raw EVM transaction** signing (sign the transaction's keccak-256 digest with
+  `$sign_digest()`; RLP encoding is supplied by your tooling).
+
+### Out of scope
+
+- **Hyperliquid order placement** (the `l1` actions) is msgpack-wrapped and
+  needs an external msgpack encoder before hashing; the signing step itself is
+  in scope, the encoding is not.
+- **StarkEx / zk / Cosmos venues** -- dYdX, Paradex, ApeX, Lighter -- use
+  different cryptography (Stark-friendly curves, Cosmos ADR-036) and are not
+  EVM secp256k1 signing.
 
 ## License
 
-MIT
+MIT © Dereck Mezquita. Provided "as is", without warranty of any kind; see
+`LICENSE`. You are responsible for how you use this software and for the safe
+custody of your private keys.

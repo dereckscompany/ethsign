@@ -1,0 +1,204 @@
+
+# ethsign
+
+Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
+secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation,
+EIP-712 typed-data signing, EIP-191 `personal_sign`, and address
+derivation. These are the cryptographic primitives needed to
+authenticate and sign orders on EVM venues such as Hyperliquid and
+Polymarket, with no native dependencies beyond `gmp` and `openssl`.
+
+> **A note on responsibility.** This package handles private keys and
+> produces signatures that can authorize real transactions. You are
+> responsible for how you use it and for keeping your keys safe.
+
+## What this is — and what it is NOT
+
+`ethsign` is the signing **maths** plus a small signer object that holds
+a key in memory. That is the whole scope.
+
+It is **NOT** a wallet application. It does not:
+
+- hold or move funds,
+- read balances,
+- connect to any chain or RPC node,
+- broadcast, submit, or track transactions.
+
+It **does**:
+
+- derive an Ethereum address from a private key,
+- hash data with keccak-256,
+- build the EIP-712 typed-data digest,
+- produce a canonical `(r, s, v)` ECDSA signature, deterministically,
+  and
+- recover the signing address from a signature (`ecrecover`).
+
+What you do with the resulting signature – post it to a venue, embed it
+in a raw transaction, present it as a login – is up to you and your
+other tooling.
+
+## Installation
+
+``` r
+# install.packages("remotes")
+remotes::install_github("dereckscompany/ethsign")
+```
+
+## Quick start
+
+Every block below is executed at render time against no network. We use
+the well-known `0x0123…0123` test key (the canonical eth_account /
+Hyperliquid example key) so the output is reproducible; in real use,
+read your key from the `ETH_PRIVATE_KEY` environment variable
+(`eth_signer()` with no argument) or generate a throwaway one with
+`eth_signer_random()`.
+
+### Create a signer
+
+``` r
+signer <- eth_signer(
+    "0x0123456789012345678901234567890123456789012345678901234567890123"
+)
+
+# The address is derived from the key; the private key is never printed.
+signer$address
+#> [1] "0x14791697260e4c9a71f18484c9f997b308e59325"
+signer
+#> <EthSigner>
+#>   address: 0x14791697260e4c9a71f18484c9f997b308e59325
+```
+
+### Sign EIP-712 typed data
+
+A single struct over atomic field types is all most venues need. Here is
+a Hyperliquid `usdSend` user action (an exact reproduction of the
+official Hyperliquid Python SDK testnet vector):
+
+``` r
+domain <- list(
+    name = "HyperliquidSignTransaction",
+    version = "1",
+    chainId = 421614,
+    verifyingContract = "0x0000000000000000000000000000000000000000"
+)
+
+types <- list(
+    list(name = "hyperliquidChain", type = "string"),
+    list(name = "destination", type = "string"),
+    list(name = "amount", type = "string"),
+    list(name = "time", type = "uint64")
+)
+
+message <- list(
+    hyperliquidChain = "Testnet",
+    destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
+    amount = "1",
+    time = 1687816341423
+)
+
+sig <- signer$sign_typed_data(domain, "HyperliquidTransaction:UsdSend", types, message)
+sig
+#> <eth_signature>
+#>   r: 0x637b37dd731507cdd24f46532ca8ba6eec616952c56218baeff04144e4a77073 
+#>   s: 0x11a6a24900e6e314136d2592e2f8d502cd89b7c15b198e1bee043c9589f9fad7 
+#>   v: 27
+```
+
+### Two wire formats
+
+The same signature serializes to either venue convention:
+
+``` r
+# {r, s, v} object form, e.g. Hyperliquid
+as_rsv(sig)
+#> $r
+#> [1] "0x637b37dd731507cdd24f46532ca8ba6eec616952c56218baeff04144e4a77073"
+#> 
+#> $s
+#> [1] "0x11a6a24900e6e314136d2592e2f8d502cd89b7c15b198e1bee043c9589f9fad7"
+#> 
+#> $v
+#> [1] 27
+
+# 65-byte concatenated hex r || s || v, e.g. Polymarket
+as_hex(sig)
+#> [1] "0x637b37dd731507cdd24f46532ca8ba6eec616952c56218baeff04144e4a7707311a6a24900e6e314136d2592e2f8d502cd89b7c15b198e1bee043c9589f9fad71b"
+```
+
+### Verify with `ecrecover`
+
+Recompute the digest, recover the address, and confirm it is the
+signer’s – the inverse check that any venue (or you) can run on a
+signature:
+
+``` r
+digest <- eip712_digest(domain, "HyperliquidTransaction:UsdSend", types, message)
+rsv <- as_rsv(sig)
+
+ecrecover(digest, rsv$r, rsv$s, rsv$v) == signer$address
+#> [1] TRUE
+```
+
+### Hashing and addresses
+
+``` r
+# keccak-256 of a string (the empty-string Ethereum vector) or raw bytes
+keccak256("")
+#>  [1] c5 d2 46 01 86 f7 23 3c 92 7e 7d b2 dc c7 03 c0 e5 00 b6 53 ca 82 27 3b 7b
+#> [26] fa d8 04 5d 85 a4 70
+keccak256(as.raw(c(0x12, 0x34)))
+#>  [1] 56 57 0d e2 87 d7 3c d1 cb 60 92 bb 8f de e6 17 39 74 95 5f de f3 45 ae 57
+#> [26] 9e e9 f4 75 ea 74 32
+
+# derive an address from a key without constructing a signer
+eth_address("0x0123456789012345678901234567890123456789012345678901234567890123")
+#> [1] "0x14791697260e4c9a71f18484c9f997b308e59325"
+```
+
+### Sign a login message (SIWE)
+
+`$sign_message()` applies the EIP-191 `personal_sign` prefix – the
+digest used by Sign-In with Ethereum and most “sign this message to log
+in” flows:
+
+``` r
+login <- "example.com wants you to sign in with your Ethereum account"
+msig <- signer$sign_message(login)
+as_hex(msig)
+#> [1] "0x6b083a7d1440b7d3dd0f56bc30f725422f02e8365b7b9f4211b6cf04cb4635147e4becaa09d02c9c77bed3b139c4f06cf7fbf81dc645b61c8dde154870ba03991b"
+```
+
+## Use cases
+
+The same `sign_typed_data` / `sign_message` / `sign_digest` primitives
+cover the EIP-712 and EIP-191 signing required by, among others:
+
+- **Hyperliquid** user actions (`usdSend`, `withdraw`, approve-agent,
+  and other user-signed actions) – verified against the official SDK
+  vectors.
+- **Polymarket** order signing (CLOB orders, the 65-byte hex form via
+  `as_hex()`).
+- **0x**, **CoW Protocol**, **1inch**, and **Seaport** (OpenSea)
+  order/intent signing.
+- **ERC-2612** and **Permit2** token permits.
+- **Gnosis Safe** transaction hashes.
+- **Sign-In with Ethereum** (SIWE) and generic `personal_sign` login
+  messages.
+- **Raw EVM transaction** signing (sign the transaction’s keccak-256
+  digest with `$sign_digest()`; RLP encoding is supplied by your
+  tooling).
+
+### Out of scope
+
+- **Hyperliquid order placement** (the `l1` actions) is msgpack-wrapped
+  and needs an external msgpack encoder before hashing; the signing step
+  itself is in scope, the encoding is not.
+- **StarkEx / zk / Cosmos venues** – dYdX, Paradex, ApeX, Lighter – use
+  different cryptography (Stark-friendly curves, Cosmos ADR-036) and are
+  not EVM secp256k1 signing.
+
+## License
+
+MIT © Dereck Mezquita. Provided “as is”, without warranty of any kind;
+see `LICENSE`. You are responsible for how you use this software and for
+the safe custody of your private keys.
