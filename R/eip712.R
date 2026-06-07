@@ -75,7 +75,9 @@ eip712_encode_value <- function(type, value) {
     return(c(raw(12), b)) # left-pad to 32
   }
   rlang::abort(paste0(
-    "eip712: unsupported field type '", type, "'. Supported: string, bytes32, ",
+    "eip712: unsupported field type '",
+    type,
+    "'. Supported: string, bytes32, ",
     "uint64, uint256, bool, address."
   ))
 }

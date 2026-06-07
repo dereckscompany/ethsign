@@ -7,7 +7,7 @@
 
 secp256k1_p <- gmp::as.bigz("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F")
 secp256k1_n <- gmp::as.bigz("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141")
-secp256k1_G <- list(
+secp256k1_g <- list(
   x = gmp::as.bigz("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"),
   y = gmp::as.bigz("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8")
 )
@@ -146,7 +146,7 @@ pubkey_from_priv <- function(priv32) {
   if (d <= 0 || d >= secp256k1_n) {
     rlang::abort("private key out of range (must be in (0, n) for secp256k1).")
   }
-  Q <- ec_mul(d, secp256k1_G)
+  Q <- ec_mul(d, secp256k1_g)
   return(c(as.raw(0x04), bigz2raw32(Q$x), bigz2raw32(Q$y)))
 }
 
@@ -199,16 +199,19 @@ rfc6979_k <- function(digest32, priv32, use_bits2octets = FALSE) {
   V <- hmac_sha256(K, V)
   K <- hmac_sha256(K, c(V, as.raw(0x01), priv32, z_oct))
   V <- hmac_sha256(K, V)
+  k <- NULL
   repeat {
     V <- hmac_sha256(K, V)
-    k <- raw2bigz(V)
-    if (k > 0 && k < n) {
-      return(k)
+    candidate <- raw2bigz(V)
+    if (candidate > 0 && candidate < n) {
+      k <- candidate
+      break
     }
     # candidate rejected: reseed and retry (essentially never taken)
     K <- hmac_sha256(K, c(V, as.raw(0x00)))
     V <- hmac_sha256(K, V)
   }
+  return(k)
 }
 
 # ---- deterministic ECDSA sign with Ethereum recovery id ----------------------
@@ -231,7 +234,7 @@ ecdsa_sign_rfc6979 <- function(digest32, priv32, use_bits2octets = FALSE) {
   d <- raw2bigz(priv32)
   z <- raw2bigz(digest32)
   k <- rfc6979_k(digest32, priv32, use_bits2octets = use_bits2octets)
-  R <- ec_mul(k, secp256k1_G)
+  R <- ec_mul(k, secp256k1_g)
   r <- gmp::mod.bigz(R$x, n)
   if (r == 0) {
     rlang::abort("ecdsa: r == 0 (astronomically unlikely; would need nonce retry).")
@@ -281,7 +284,7 @@ ecdsa_sign_rfc6979 <- function(digest32, priv32, use_bits2octets = FALSE) {
 ecrecover <- function(digest32, r, s, v) {
   p <- secp256k1_p
   n <- secp256k1_n
-  G <- secp256k1_G
+  G <- secp256k1_g
   r <- as_scalar_bigz(r)
   s <- as_scalar_bigz(s)
   recid <- as.integer(v) - 27L
@@ -298,17 +301,17 @@ ecrecover <- function(digest32, r, s, v) {
   if (as.integer(gmp::mod.bigz(y, 2)) != recid) {
     y <- gmp::mod.bigz(p - y, p)
   }
-  Rp <- list(x = x, y = y)
+  r_point <- list(x = x, y = y)
   z <- raw2bigz(digest32)
   rinv <- gmp::inv.bigz(r, n)
-  # Q = r^-1 * (s*R - z*G)
-  sR <- ec_mul(gmp::mod.bigz(s, n), Rp)
-  zG <- ec_mul(gmp::mod.bigz(z, n), G)
-  neg_zG <- list(x = zG$x, y = gmp::mod.bigz(p - zG$y, p))
-  Q <- ec_mul(rinv, ec_add(sR, neg_zG))
-  if (is.null(Q)) {
+  # q = r^-1 * (s*R - z*G)
+  s_r <- ec_mul(gmp::mod.bigz(s, n), r_point)
+  z_g <- ec_mul(gmp::mod.bigz(z, n), G)
+  neg_z_g <- list(x = z_g$x, y = gmp::mod.bigz(p - z_g$y, p))
+  q <- ec_mul(rinv, ec_add(s_r, neg_z_g))
+  if (is.null(q)) {
     return(NULL)
   }
-  pub65 <- c(as.raw(0x04), bigz2raw32(Q$x), bigz2raw32(Q$y))
+  pub65 <- c(as.raw(0x04), bigz2raw32(q$x), bigz2raw32(q$y))
   return(eth_address_from_pubkey(pub65))
 }

@@ -36,7 +36,8 @@ new_eth_signature <- function(r, s, v) {
 assert_eth_signature <- function(sig, what) {
   if (!inherits(sig, "eth_signature")) {
     rlang::abort(paste0(
-      what, "(): `sig` must be an <eth_signature>, e.g. from ",
+      what,
+      "(): `sig` must be an <eth_signature>, e.g. from ",
       "eth_signer(...)$sign_digest(digest)."
     ))
   }

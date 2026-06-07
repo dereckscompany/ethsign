@@ -68,11 +68,14 @@ eth_address <- function(private_key) {
 #' @importFrom openssl rand_bytes
 #' @export
 eth_keygen <- function() {
+  key <- NULL
   repeat {
     bytes <- openssl::rand_bytes(32L)
     d <- raw2bigz(bytes)
     if (d > 0 && d < secp256k1_n) {
-      return(paste0("0x", raw2hex(bytes)))
+      key <- paste0("0x", raw2hex(bytes))
+      break
     }
   }
+  return(key)
 }

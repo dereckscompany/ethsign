@@ -1,6 +1,6 @@
 Package: ethsign
 Title: Ethereum Signing Primitives
-Version: 0.0.0.9000
+Version: 0.0.1
 URL: https://dereckscompany.github.io/ethsign,
     https://github.com/dereckscompany/ethsign
 BugReports: https://github.com/dereckscompany/ethsign/issues
@@ -10,7 +10,11 @@ Authors@R:
            role = c("aut", "cre"),
            email = "dereck@mezquita.io",
            comment = c(ORCID = "0000-0002-9307-6762"))
-Description: Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 ECDSA with Ethereum recovery id and low-s, EIP-712 typed-data signing, and address derivation. The cryptographic primitives needed to authenticate and sign orders on EVM venues such as Hyperliquid and Polymarket.
+Description: Local Ethereum and EVM wallet signing in pure R: keccak-256
+    hashing, secp256k1 ECDSA with Ethereum recovery id and low-s, EIP-712
+    typed-data signing, and address derivation. The cryptographic primitives
+    needed to authenticate and sign orders on EVM venues such as Hyperliquid
+    and Polymarket.
 License: MIT
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c("namespace", "rd", "roxyassert::contract_roclet"))

@@ -19,7 +19,9 @@ keccak256_self_test <- function() {
   if (!identical(got, want)) {
     rlang::abort(paste0(
       "keccak256 self-test FAILED: openssl::keccak is not original Keccak-256 ",
-      "(got ", got, ")."
+      "(got ",
+      got,
+      ")."
     ))
   }
   return(invisible(TRUE))
