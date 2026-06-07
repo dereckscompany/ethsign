@@ -2,11 +2,12 @@
 # ============================================================================
 # LOGO.R - Generate the ethsign hex sticker
 # ============================================================================
-# Concept: "Xi Keystone". The Ethereum diamond as the centerpiece, drawn as a
-# faceted crystal, with a glowing elliptic-curve line (secp256k1) slicing
-# through it and the three signature components r / s / v labelling three
-# facets. Neon violet/indigo crystal, cyan signing-slice, thick violet frame,
-# on a near-black hex.
+# Concept: "Xi Keystone". The Ethereum diamond as a faceted crystal sitting on
+# the full secp256k1 curve (y^2 = x^3 + 7). The whole curve is drawn faint; a
+# bright cyan arc -- the active signing slice -- rides the upper branch, with a
+# couple of glowing nodes and a faint secant hinting at the elliptic-curve
+# group law. A specular highlight lifts the crystal. Thick violet frame,
+# near-black hex.
 #
 # Multi-layer compositing: ggplot2 renders the crisp layers, magick applies
 # gaussian blur + screen blends for the neon glow.
@@ -25,25 +26,24 @@ library(magick)
 col_hex_fill <- "#0B0A14" # near-black indigo
 col_hex_border <- "#4A3F9E" # thick violet frame
 
-# Ethereum crystal facets (light source upper-right): lightest -> darkest
 col_facet_tr <- "#B9AEFF" # top-right  (lightest)
 col_facet_tl <- "#6E5CEA" # top-left
 col_facet_br <- "#5544C9" # bottom-right
 col_facet_bl <- "#372C8F" # bottom-left (darkest)
 
 col_edge <- "#D6CEFF" # bright facet edges
-col_curve <- "#45E9FF" # the secp256k1 signing-slice (bright cyan)
-col_point <- "#CFFBFF" # intersection points on the slice
-col_rsv <- "#F2F5FF" # r / s / v labels (near-white, bright)
+col_curve_dim <- "#3A6E86" # faint full curve (dim teal)
+col_curve <- "#45E9FF" # bright signing-slice (cyan)
+col_point <- "#CFFBFF" # glowing nodes on the slice
+col_secant <- "#7FD8E8" # faint group-law secant
+col_spark <- "#FFFFFF" # crystal highlight / sparkle
 col_word <- "#FFFFFF" # wordmark
 col_sub <- "#8C88B8" # subtitle
 
 # ============================================================================
-# Geometry
+# Crystal geometry
 # ============================================================================
 
-# Ethereum diamond key points. Lowered toward the hex centre, with the wordmark
-# tucked into the lower gap.
 TT <- c(0.00, 0.435) # top apex
 LL <- c(-0.22, 0.135) # left shoulder
 RR <- c(0.22, 0.135) # right shoulder
@@ -55,18 +55,64 @@ facet_tr <- data.frame(x = c(TT[1], MM[1], RR[1]), y = c(TT[2], MM[2], RR[2]))
 facet_bl <- data.frame(x = c(LL[1], MM[1], BB[1]), y = c(LL[2], MM[2], BB[2]))
 facet_br <- data.frame(x = c(MM[1], RR[1], BB[1]), y = c(MM[2], RR[2], BB[2]))
 
-# Closed silhouette (drawn as a polygon so the sharp apex joins cleanly with a
-# mitre and leaves no notch/divot).
-silhouette <- data.frame(
-  x = c(TT[1], RR[1], BB[1], LL[1]),
-  y = c(TT[2], RR[2], BB[2], LL[2])
+silhouette <- data.frame(x = c(TT[1], RR[1], BB[1], LL[1]), y = c(TT[2], RR[2], BB[2], LL[2]))
+edge_ridge <- data.frame(x = c(TT[1], MM[1], BB[1]), y = c(TT[2], MM[2], BB[2]))
+edge_waist <- data.frame(x = c(LL[1], MM[1], RR[1]), y = c(LL[2], MM[2], RR[2]))
+
+# Specular highlight: a bright streak down the upper-right facet edge.
+highlight <- data.frame(
+  x = c(TT[1] + 0.015, RR[1] - 0.02),
+  y = c(TT[2] - 0.03, RR[2] + 0.03)
 )
-edge_ridge <- data.frame(x = c(TT[1], MM[1], BB[1]), y = c(TT[2], MM[2], BB[2])) # vertical
-edge_waist <- data.frame(x = c(LL[1], MM[1], RR[1]), y = c(LL[2], MM[2], RR[2])) # shoulders
 
 deg2rad <- function(d) d * pi / 180
 
-# Pointy-top hexagon.
+# ============================================================================
+# secp256k1 curve (shared affine transform: full curve, slice, nodes, secant)
+# ============================================================================
+
+CURVE_ANGLE <- deg2rad(18)
+CURVE_XC <- -0.45 # math-x mapped onto the rotation origin
+CURVE_SX <- 0.256
+CURVE_SY <- 0.081
+CURVE_CX <- 0.00 # plot translate
+CURVE_CY <- -0.045
+X0 <- -(7^(1 / 3)) # ~ -1.913: the nose, where y = 0
+
+# math (x, y) -> plot coords
+tf <- function(mx, my) {
+  xx <- (mx - CURVE_XC) * CURVE_SX
+  yy <- my * CURVE_SY
+  data.frame(
+    x = CURVE_CX + xx * cos(CURVE_ANGLE) - yy * sin(CURVE_ANGLE),
+    y = CURVE_CY + xx * sin(CURVE_ANGLE) + yy * cos(CURVE_ANGLE)
+  )
+}
+
+curve_branch <- function(x_from, x_to, sign = 1, n = 220) {
+  xs <- seq(x_from, x_to, length.out = n)
+  tf(xs, sign * sqrt(pmax(xs^3 + 7, 0)))
+}
+
+# Whole curve (both branches). The lower branch is kept shorter than the upper
+# so its right-hand end stays clear of the border.
+full_curve <- function(xmax_up = 0.80, xmax_lo = 0.58) {
+  rbind(curve_branch(xmax_lo, X0, sign = -1), curve_branch(X0, xmax_up, sign = 1))
+}
+
+# Bright active arc on the upper branch -- the part that cuts through the crystal.
+slice_curve <- function() curve_branch(-1.45, 0.72, sign = 1, n = 260)
+
+# The two glowing nodes sit at the ends of the bright slice.
+slice_ends <- function() {
+  sc <- slice_curve()
+  sc[c(1L, nrow(sc)), ]
+}
+
+# ============================================================================
+# Hex + small helpers
+# ============================================================================
+
 hex_vertices <- function(cx = 0, cy = 0, r = 1) {
   angles <- seq(pi / 2, pi / 2 + 2 * pi, length.out = 7)[1:6]
   data.frame(x = cx + r * cos(angles), y = cy + r * sin(angles))
@@ -77,22 +123,12 @@ filled_circle <- function(cx, cy, r, n = 120) {
   data.frame(x = cx + r * cos(a), y = cy + r * sin(a))
 }
 
-# The signing-slice: a real arc of secp256k1's curve y^2 = x^3 + 7, scaled
-# (bigger) and rotated so a graceful slice cuts diagonally through the diamond.
-curve_slice <- function() {
-  xs <- seq(-1.55, 1.95, length.out = 240)
-  ys <- sqrt(pmax(xs^3 + 7, 0))
-  xs <- (xs - mean(range(xs))) * 0.205
-  ys <- (ys - mean(range(ys))) * 0.105
-  ang <- deg2rad(22)
+# A 4-point sparkle star.
+sparkle <- function(cx, cy, r) {
   data.frame(
-    x = MM[1] + xs * cos(ang) - ys * sin(ang),
-    y = MM[2] + 0.01 + xs * sin(ang) + ys * cos(ang)
+    x = c(cx, cx + r * 0.28, cx + r, cx + r * 0.28, cx, cx - r * 0.28, cx - r, cx - r * 0.28),
+    y = c(cy + r, cy + r * 0.28, cy, cy - r * 0.28, cy - r, cy - r * 0.28, cy, cy + r * 0.28)
   )
-}
-
-slice_points <- function(cs) {
-  data.frame(x = c(cs$x[40], cs$x[200]), y = c(cs$y[40], cs$y[200]))
 }
 
 logo_theme <- function() {
@@ -115,37 +151,35 @@ render_layer <- function(p, width = 3000, height = 3480) {
 }
 
 # ============================================================================
-# Layer 1: Base (thick-framed hex, crystal, slice, r/s/v, wordmark)
+# Layer 1: Base
 # ============================================================================
 
 build_base_layer <- function() {
-  cs <- curve_slice()
-  pts <- slice_points(cs)
+  fc <- full_curve()
+  sc <- slice_curve()
+  ends <- slice_ends()
   hex_outer <- hex_vertices(0, 0, 0.57)
-  hex_inner <- hex_vertices(0, 0, 0.505) # inner edge of the thick frame
+  hex_inner <- hex_vertices(0, 0, 0.505)
 
   ggplot() +
-    # Thick frame = outer hex (border colour) with inner hex (fill) on top
+    # Thick frame
     geom_polygon(data = hex_outer, aes(x, y), fill = col_hex_border, colour = NA) +
     geom_polygon(data = hex_inner, aes(x, y), fill = col_hex_fill, colour = NA) +
+    # Faint full secp256k1 curve, behind everything
+    geom_path(data = fc, aes(x, y), colour = col_curve_dim, linewidth = 2.0, alpha = 0.62, lineend = "round") +
     # Crystal facets
     geom_polygon(data = facet_bl, aes(x, y), fill = col_facet_bl, colour = NA) +
     geom_polygon(data = facet_br, aes(x, y), fill = col_facet_br, colour = NA) +
     geom_polygon(data = facet_tl, aes(x, y), fill = col_facet_tl, colour = NA) +
     geom_polygon(data = facet_tr, aes(x, y), fill = col_facet_tr, colour = NA) +
-    # Thin internal edges, then the clean bright silhouette on top (closed
-    # polygon, mitre join -> sharp apex, no divot)
+    # Crystal edges + clean silhouette
     geom_path(data = edge_waist, aes(x, y), colour = col_edge, linewidth = 0.7, alpha = 0.7, lineend = "round") +
     geom_path(data = edge_ridge, aes(x, y), colour = col_edge, linewidth = 0.7, alpha = 0.7, lineend = "round") +
     geom_polygon(data = silhouette, aes(x, y), fill = NA, colour = col_edge, linewidth = 2.0, linejoin = "mitre") +
-    # secp256k1 signing-slice (thicker, bigger, brighter)
-    geom_path(data = cs, aes(x, y), colour = col_curve, linewidth = 3.6, lineend = "round") +
-    geom_point(data = pts, aes(x, y), colour = col_point, size = 4.2) +
-    # r / s / v just outside the crystal edges (on the black field, not inside)
-    annotate("text", x = 0.25, y = 0.24, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.25, y = -0.05, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.25, y = -0.05, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    # Wordmark + subtitle in the lower gap (sized to sit inside the frame)
+    # Bright signing-slice + nodes (P, Q on the bright arc; R on the lower branch)
+    geom_path(data = sc, aes(x, y), colour = col_curve, linewidth = 4.3, lineend = "round") +
+    geom_point(data = ends, aes(x, y), colour = col_point, size = 4.6) +
+    # Wordmark + subtitle
     annotate("text", x = 0, y = -0.33, label = "ethsign", colour = col_word, size = 8, fontface = "bold") +
     annotate("text", x = 0, y = -0.405, label = "secp256k1", colour = col_sub, size = 3.0) +
     logo_coord() +
@@ -153,26 +187,17 @@ build_base_layer <- function() {
 }
 
 # ============================================================================
-# Layer 2: Glow sources (bright shapes to blur into a neon halo)
+# Layer 2: Glow sources
 # ============================================================================
 
 build_glow_layer <- function() {
-  cs <- curve_slice()
-  pts <- slice_points(cs)
+  sc <- slice_curve()
+  ends <- slice_ends()
 
   ggplot() +
-    # Slice glow (fat + bright)
-    geom_path(data = cs, aes(x, y), colour = col_curve, linewidth = 6.0, lineend = "round") +
-    geom_point(data = pts, aes(x, y), colour = col_point, size = 12) +
-    # Silhouette + edge glow
+    geom_path(data = sc, aes(x, y), colour = col_curve, linewidth = 7.2, lineend = "round") +
+    geom_point(data = ends, aes(x, y), colour = col_point, size = 12) +
     geom_polygon(data = silhouette, aes(x, y), fill = NA, colour = col_edge, linewidth = 2.6, linejoin = "mitre") +
-    geom_path(data = edge_ridge, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
-    geom_path(data = edge_waist, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
-    # r / s / v halo so the labels read as lit
-    annotate("text", x = 0.25, y = 0.24, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.25, y = -0.05, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.25, y = -0.05, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    # Warm ambient core behind the crystal
     geom_polygon(data = filled_circle(0, 0.08, 0.05), aes(x, y), fill = "#8E7BFF80", colour = NA) +
     annotate("point", x = 0, y = 0.08, size = 26, colour = "#6E5CEA20", shape = 16) +
     logo_coord() +
