@@ -11,22 +11,25 @@ Authors@R:
            email = "dereck@mezquita.io",
            comment = c(ORCID = "0000-0002-9307-6762"))
 Description: Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 ECDSA with Ethereum recovery id and low-s, EIP-712 typed-data signing, and address derivation. The cryptographic primitives needed to authenticate and sign orders on EVM venues such as Hyperliquid and Polymarket.
-License: MIT + file LICENSE
+License: MIT
 Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
+Roxygen: list(markdown = TRUE, roclets = c("namespace", "rd", "roxyassert::contract_roclet"))
 RoxygenNote: 7.3.3
+Imports:
+    assert,
+    gmp,
+    openssl,
+    R6,
+    rlang
 Suggests:
     box,
-    ggplot2,
     knitr,
-    microbenchmark,
     pkgdown,
     rmarkdown,
+    roxyassert,
     testthat (>= 3.0.0)
+Remotes:
+    dereckscompany/assert,
+    dereckscompany/roxyassert
 VignetteBuilder: knitr
 Config/testthat/edition: 3
-LinkingTo:
-    Rcpp
-Imports:
-    Rcpp
-
