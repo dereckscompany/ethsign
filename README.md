@@ -1,5 +1,5 @@
 
-# ethsign
+# ethsign <img src="man/figures/logo.png" align="right" height="139" alt="ethsign hex sticker" />
 
 Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
 secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation,
