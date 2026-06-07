@@ -1,0 +1,22 @@
+{
+  "template": "https://github.com/dereckscompany/templates-cookiecutter.git",
+  "commit": "1e9a1bf5eb5275ede6047dcd188ddf919fce73a6",
+  "checkout": "1e9a1bf5eb5275ede6047dcd188ddf919fce73a6",
+  "context": {
+    "cookiecutter": {
+      "package_name": "ethsign",
+      "package_title": "Ethereum Signing Primitives",
+      "description": "Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 ECDSA with Ethereum recovery id and low-s, EIP-712 typed-data signing, and address derivation. The cryptographic primitives needed to authenticate and sign orders on EVM venues such as Hyperliquid and Polymarket.",
+      "author_given": "Dereck",
+      "author_family": "Mezquita",
+      "author_email": "dereck@mezquita.io",
+      "author_orcid": "0000-0002-9307-6762",
+      "github_org": "dereckscompany",
+      "license": "MIT",
+      "use_rcpp": true,
+      "_template": "https://github.com/dereckscompany/templates-cookiecutter.git",
+      "_commit": "1e9a1bf5eb5275ede6047dcd188ddf919fce73a6"
+    }
+  },
+  "directory": "template-r-package"
+}
