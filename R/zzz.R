@@ -1,12 +1,11 @@
 # File: R/zzz.R
 # Package load hook: the Keccak-256 self-test that guards the whole signing path.
 
-#' Verify openssl Provides Original Keccak-256
+#' Verify Keccak-256 Produces the Canonical Ethereum Vector
 #'
-#' Fails fast if [openssl::keccak()] is not the original (pre-FIPS-202) Keccak
-#' primitive, by checking the canonical empty-string Ethereum test vector. Rare
-#' Linux openssl builds strip non-NIST primitives; this guard ensures a wrong
-#' hashing primitive aborts at package load rather than silently producing
+#' Fails fast if [keccak256()] does not return the original (pre-FIPS-202)
+#' Keccak digest, by checking the canonical empty-string Ethereum test vector.
+#' A cheap load-time guard against a wrong hashing primitive silently producing
 #' invalid Ethereum signatures.
 #'
 #' @return Invisibly `TRUE`; aborts on mismatch.
@@ -18,8 +17,7 @@ keccak256_self_test <- function() {
   want <- "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
   if (!identical(got, want)) {
     rlang::abort(paste0(
-      "keccak256 self-test FAILED: openssl::keccak is not original Keccak-256 ",
-      "(got ",
+      "keccak256 self-test FAILED: not the original Keccak-256 (got ",
       got,
       ")."
     ))
@@ -29,8 +27,8 @@ keccak256_self_test <- function() {
 
 #' Package Load Hook
 #'
-#' Runs the Keccak-256 self-test at load time so a system openssl that lacks the
-#' original (pre-FIPS-202) Keccak primitive fails fast.
+#' Runs the Keccak-256 self-test at load time so a wrong Keccak primitive fails
+#' fast rather than silently producing invalid signatures.
 #'
 #' @param libname Character; the library directory (unused).
 #' @param pkgname Character; the package name (unused).

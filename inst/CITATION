@@ -5,13 +5,13 @@ bibentry(
   title    = "ethsign: Ethereum Signing Primitives",
   author   = person("Dereck", "Mezquita", comment = c(ORCID = "0000-0002-9307-6762")),
   year     = "2026",
-  note     = "R package version 0.0.1",
+  note     = "R package version 0.0.2",
   url      = "https://github.com/dereckscompany/ethsign",
   key      = "ethsign-2026",
   textVersion = paste(
     "Mezquita, D. (2026).",
     "ethsign: Ethereum Signing Primitives.",
-    "R package version 0.0.1.",
+    "R package version 0.0.2.",
     "Available at https://github.com/dereckscompany/ethsign"
   )
 )

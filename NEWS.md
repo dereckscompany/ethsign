@@ -1,3 +1,11 @@
+# ethsign 0.0.2
+
+* Hash Keccak-256 with `secretbase::keccak()` instead of `openssl::keccak()`.
+  The openssl primitive depends on the system OpenSSL exposing the legacy
+  `keccak-256` algorithm (only present in OpenSSL >= 3.2), so the package failed
+  to load on systems with an older OpenSSL (e.g. Linux CI runners). `secretbase`
+  bundles its own Keccak and is portable everywhere.
+
 # ethsign 0.0.1
 
 Initial release: pure-R Ethereum and EVM wallet signing primitives.

@@ -1,32 +1,31 @@
 # File: R/keccak.R
-# Keccak-256 (original, pre-FIPS-202 Keccak as used by Ethereum) via openssl.
+# Keccak-256 (original, pre-FIPS-202 Keccak as used by Ethereum) via secretbase.
 
 #' Compute Keccak-256 of Raw Bytes or a UTF-8 String
 #'
 #' Ethereum uses the original Keccak (the pre-FIPS-202 padding scheme), NOT
-#' SHA3-256. [openssl::keccak()] (openssl >= 2.3) implements original Keccak, so
-#' it is the hashing primitive used throughout this package's signing path. A
-#' load-time self-test (see `.onLoad()`) aborts if the system openssl ships a
-#' FIPS-202 SHA3 under this name.
+#' SHA3-256. We hash with [secretbase::keccak()], which bundles its own Keccak
+#' implementation and so is portable across systems regardless of the system
+#' OpenSSL version. (`openssl::keccak()` depends on the system OpenSSL exposing
+#' the legacy `keccak-256` algorithm, which only exists in OpenSSL >= 3.2 and is
+#' absent on many systems.)
 #'
 #' @param x (raw | scalar<character>) raw bytes, or a length-1 character string
 #'   (encoded as UTF-8 before hashing).
-#' @return (vector<raw, 32>) a plain `raw(32)` digest (the `"hash"` class
-#'   attribute is stripped).
+#' @return (vector<raw, 32>) a plain `raw(32)` digest.
 #'
 #' @examples
 #' keccak256("") # the empty-string Ethereum vector
 #' keccak256(as.raw(c(0x12, 0x34)))
 #'
-#' @importFrom openssl keccak
+#' @importFrom secretbase keccak
 #' @export
 keccak256 <- function(x) {
   assert_args_keccak256(x)
   if (is.character(x)) {
     x <- charToRaw(enc2utf8(x))
   }
-  # c() strips the "hash" class attribute -> plain raw(32)
-  return(assert_return_keccak256(c(openssl::keccak(x, size = 256))))
+  return(assert_return_keccak256(secretbase::keccak(x, bits = 256L, convert = FALSE)))
 }
 
 #' Keccak-256 as a Lowercase Hex String

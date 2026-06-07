@@ -11,15 +11,15 @@ keccak256(x)
 (encoded as UTF-8 before hashing).}
 }
 \value{
-(vector<raw, 32>) a plain \code{raw(32)} digest (the \code{"hash"} class
-attribute is stripped).
+(vector<raw, 32>) a plain \code{raw(32)} digest.
 }
 \description{
 Ethereum uses the original Keccak (the pre-FIPS-202 padding scheme), NOT
-SHA3-256. \code{\link[openssl:hash]{openssl::keccak()}} (openssl >= 2.3) implements original Keccak, so
-it is the hashing primitive used throughout this package's signing path. A
-load-time self-test (see \code{.onLoad()}) aborts if the system openssl ships a
-FIPS-202 SHA3 under this name.
+SHA3-256. We hash with \code{\link[secretbase:keccak]{secretbase::keccak()}}, which bundles its own Keccak
+implementation and so is portable across systems regardless of the system
+OpenSSL version. (\code{openssl::keccak()} depends on the system OpenSSL exposing
+the legacy \code{keccak-256} algorithm, which only exists in OpenSSL >= 3.2 and is
+absent on many systems.)
 }
 \examples{
 keccak256("") # the empty-string Ethereum vector

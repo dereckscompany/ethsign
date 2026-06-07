@@ -1,6 +1,6 @@
 Package: ethsign
 Title: Ethereum Signing Primitives
-Version: 0.0.1
+Version: 0.0.2
 URL: https://dereckscompany.github.io/ethsign,
     https://github.com/dereckscompany/ethsign
 BugReports: https://github.com/dereckscompany/ethsign/issues
@@ -24,7 +24,8 @@ Imports:
     gmp,
     openssl,
     R6,
-    rlang
+    rlang,
+    secretbase
 Suggests:
     box,
     knitr,
