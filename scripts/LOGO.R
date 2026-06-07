@@ -141,13 +141,13 @@ build_base_layer <- function() {
     # secp256k1 signing-slice (thicker, bigger, brighter)
     geom_path(data = cs, aes(x, y), colour = col_curve, linewidth = 3.6, lineend = "round") +
     geom_point(data = pts, aes(x, y), colour = col_point, size = 4.2) +
-    # r / s / v out on the black background, flanking the crystal
-    annotate("text", x = 0.37, y = 0.235, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.40, y = -0.075, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.40, y = -0.075, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    # r / s / v just outside the crystal edges (on the black field, not inside)
+    annotate("text", x = 0.25, y = 0.24, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.25, y = -0.05, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = -0.25, y = -0.05, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
     # Wordmark + subtitle in the lower gap (sized to sit inside the frame)
-    annotate("text", x = 0, y = -0.35, label = "ethsign", colour = col_word, size = 8, fontface = "bold") +
-    annotate("text", x = 0, y = -0.435, label = "secp256k1", colour = col_sub, size = 3.0) +
+    annotate("text", x = 0, y = -0.33, label = "ethsign", colour = col_word, size = 8, fontface = "bold") +
+    annotate("text", x = 0, y = -0.405, label = "secp256k1", colour = col_sub, size = 3.0) +
     logo_coord() +
     logo_theme()
 }
@@ -169,9 +169,9 @@ build_glow_layer <- function() {
     geom_path(data = edge_ridge, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
     geom_path(data = edge_waist, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
     # r / s / v halo so the labels read as lit
-    annotate("text", x = 0.37, y = 0.235, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.40, y = -0.075, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.40, y = -0.075, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.25, y = 0.24, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.25, y = -0.05, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = -0.25, y = -0.05, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
     # Warm ambient core behind the crystal
     geom_polygon(data = filled_circle(0, 0.08, 0.05), aes(x, y), fill = "#8E7BFF80", colour = NA) +
     annotate("point", x = 0, y = 0.08, size = 26, colour = "#6E5CEA20", shape = 16) +
