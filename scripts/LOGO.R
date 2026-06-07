@@ -44,11 +44,11 @@ col_sub <- "#8C88B8" # subtitle
 
 # Ethereum diamond key points. Lowered toward the hex centre, with the wordmark
 # tucked into the lower gap.
-TT <- c(0.00, 0.45) # top apex
-LL <- c(-0.22, 0.15) # left shoulder
-RR <- c(0.22, 0.15) # right shoulder
-MM <- c(0.00, 0.08) # centre waist
-BB <- c(0.00, -0.24) # bottom apex
+TT <- c(0.00, 0.435) # top apex
+LL <- c(-0.22, 0.135) # left shoulder
+RR <- c(0.22, 0.135) # right shoulder
+MM <- c(0.00, 0.065) # centre waist
+BB <- c(0.00, -0.255) # bottom apex
 
 facet_tl <- data.frame(x = c(TT[1], LL[1], MM[1]), y = c(TT[2], LL[2], MM[2]))
 facet_tr <- data.frame(x = c(TT[1], MM[1], RR[1]), y = c(TT[2], MM[2], RR[2]))
@@ -141,13 +141,13 @@ build_base_layer <- function() {
     # secp256k1 signing-slice (thicker, bigger, brighter)
     geom_path(data = cs, aes(x, y), colour = col_curve, linewidth = 3.6, lineend = "round") +
     geom_point(data = pts, aes(x, y), colour = col_point, size = 4.2) +
-    # r / s / v on three facets (bright, bold, larger)
-    annotate("text", x = 0.075, y = 0.225, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.105, y = -0.01, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.105, y = -0.01, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    # r / s / v out on the black background, flanking the crystal
+    annotate("text", x = 0.37, y = 0.235, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.40, y = -0.075, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = -0.40, y = -0.075, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
     # Wordmark + subtitle in the lower gap (sized to sit inside the frame)
-    annotate("text", x = 0, y = -0.37, label = "ethsign", colour = col_word, size = 8, fontface = "bold") +
-    annotate("text", x = 0, y = -0.455, label = "secp256k1", colour = col_sub, size = 3.0) +
+    annotate("text", x = 0, y = -0.35, label = "ethsign", colour = col_word, size = 8, fontface = "bold") +
+    annotate("text", x = 0, y = -0.435, label = "secp256k1", colour = col_sub, size = 3.0) +
     logo_coord() +
     logo_theme()
 }
@@ -169,9 +169,9 @@ build_glow_layer <- function() {
     geom_path(data = edge_ridge, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
     geom_path(data = edge_waist, aes(x, y), colour = col_edge, linewidth = 1.2, alpha = 0.7) +
     # r / s / v halo so the labels read as lit
-    annotate("text", x = 0.075, y = 0.225, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = 0.105, y = -0.01, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
-    annotate("text", x = -0.105, y = -0.01, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.37, y = 0.235, label = "r", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = 0.40, y = -0.075, label = "s", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
+    annotate("text", x = -0.40, y = -0.075, label = "v", colour = col_rsv, size = 7.5, fontface = "bold.italic") +
     # Warm ambient core behind the crystal
     geom_polygon(data = filled_circle(0, 0.08, 0.05), aes(x, y), fill = "#8E7BFF80", colour = NA) +
     annotate("point", x = 0, y = 0.08, size = 26, colour = "#6E5CEA20", shape = 16) +
