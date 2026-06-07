@@ -24,7 +24,6 @@ Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 E
 
 | Feature | Description |
 |---------|-------------|
-| **Rcpp** | C++ integration with example function using loop unrolling |
 | **testthat** | Unit testing framework with separate test files |
 | **roxygen2** | Documentation generation from code comments |
 | **pkgdown** | Automatic documentation website |
@@ -35,11 +34,7 @@ Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 E
 ## Project Structure
 
 ```
-├── R/
-│   ├── add.R              # Pure R function example
-│   └── cpp.R              # Rcpp configuration
-├── src/
-│   └── sum_array.cpp      # C++ function with Rcpp
+├── R/                     # Package source
 ├── tests/testthat/        # Unit tests
 ├── vignettes/             # Package vignettes
 ├── scripts/
@@ -80,14 +75,6 @@ Local Ethereum and EVM wallet signing in pure R: keccak-256 hashing, secp256k1 E
 
 ```r
 library(ethsign)
-
-# Pure R function
-add(1, 2)
-#> [1] 3
-
-# Rcpp function (C++)
-sum_array_cpp(1:1000000)
-#> [1] 500000500000
 ```
 
 ## Installation
@@ -104,7 +91,6 @@ install.packages("ethsign")
 ### Requirements
 
 - R >= 4.0
-- Rtools (Windows) or Xcode CLI (macOS) for C++ compilation
 - [air](https://posit-dev.github.io/air/) for code formatting (optional)
 
 ## CI/CD

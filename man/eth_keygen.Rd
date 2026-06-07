@@ -7,7 +7,7 @@
 eth_keygen()
 }
 \value{
-Character; a \verb{0x}-prefixed 64-hex private key.
+(scalar<character>) a \verb{0x}-prefixed 64-hex private key.
 }
 \description{
 Draws 32 cryptographically secure random bytes from \code{\link[openssl:rand_bytes]{openssl::rand_bytes()}}

@@ -7,10 +7,10 @@
 as_rsv(sig)
 }
 \arguments{
-\item{sig}{An \code{eth_signature} from an \link{EthSigner}.}
+\item{sig}{(eth_signature) a signature from an \link{EthSigner}.}
 }
 \value{
-A \verb{list(r = <0x-hex>, s = <0x-hex>, v = <integer>)}.
+(list) a \verb{list(r = <0x-hex>, s = <0x-hex>, v = <integer>)}.
 }
 \description{
 Returns the signature as a \code{list(r, s, v)} with \code{r}/\code{s} as minimal \verb{0x}-hex

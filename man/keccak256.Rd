@@ -7,11 +7,12 @@
 keccak256(x)
 }
 \arguments{
-\item{x}{A raw vector, or a length-1 character string (encoded as UTF-8
-before hashing).}
+\item{x}{(raw | scalar<character>) raw bytes, or a length-1 character string
+(encoded as UTF-8 before hashing).}
 }
 \value{
-A plain \code{raw(32)} digest (the \code{"hash"} class attribute is stripped).
+(vector<raw, 32>) a plain \code{raw(32)} digest (the \code{"hash"} class
+attribute is stripped).
 }
 \description{
 Ethereum uses the original Keccak (the pre-FIPS-202 padding scheme), NOT

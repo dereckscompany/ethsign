@@ -33,9 +33,10 @@ EthSigner <- R6::R6Class(
     #'   a `0x`-prefixed 64-hex string or `raw(32)`.
     #' @return (class<EthSigner>) invisible self.
     initialize = function(private_key) {
+      assert_args_EthSigner__initialize(private_key)
       private$.priv <- normalise_private_key(private_key)
       private$.address <- eth_address_from_pubkey(pubkey_from_priv(private$.priv))
-      return(invisible(self))
+      return(invisible(assert_return_EthSigner__initialize(self)))
     },
 
     #' @description
@@ -44,8 +45,9 @@ EthSigner <- R6::R6Class(
     #' @param digest32 (vector<raw, 32>) the digest to sign.
     #' @return (eth_signature) the signature.
     sign_digest = function(digest32) {
+      assert_args_EthSigner__sign_digest(digest32)
       sig <- ecdsa_sign_rfc6979(digest32, private$.priv)
-      return(new_eth_signature(sig$r, sig$s, sig$v))
+      return(assert_return_EthSigner__sign_digest(new_eth_signature(sig$r, sig$s, sig$v)))
     },
 
     #' @description
@@ -58,8 +60,9 @@ EthSigner <- R6::R6Class(
     #' @param message (list) the named field values.
     #' @return (eth_signature) the signature.
     sign_typed_data = function(domain, primary_type, types, message) {
+      assert_args_EthSigner__sign_typed_data(domain, primary_type, types, message)
       digest <- eip712_digest(domain, primary_type, types, message)
-      return(self$sign_digest(digest))
+      return(assert_return_EthSigner__sign_typed_data(self$sign_digest(digest)))
     },
 
     #' @description
@@ -71,13 +74,14 @@ EthSigner <- R6::R6Class(
     #' @param text (scalar<character>) the UTF-8 message to sign.
     #' @return (eth_signature) the signature.
     sign_message = function(text) {
+      assert_args_EthSigner__sign_message(text)
       body <- charToRaw(enc2utf8(text))
       prefix <- c(
         as.raw(0x19),
         charToRaw("Ethereum Signed Message:\n"),
         charToRaw(as.character(length(body)))
       )
-      return(self$sign_digest(keccak256(c(prefix, body))))
+      return(assert_return_EthSigner__sign_message(self$sign_digest(keccak256(c(prefix, body)))))
     },
 
     #' @description
@@ -124,6 +128,7 @@ EthSigner <- R6::R6Class(
 #' @importFrom rlang abort
 #' @export
 eth_signer <- function(private_key = Sys.getenv("ETH_PRIVATE_KEY")) {
+  assert_args_eth_signer(private_key)
   if (is.character(private_key) && length(private_key) == 1L && !nzchar(private_key)) {
     rlang::abort(paste0(
       "No private key provided. Set the ETH_PRIVATE_KEY environment variable, ",
@@ -131,7 +136,7 @@ eth_signer <- function(private_key = Sys.getenv("ETH_PRIVATE_KEY")) {
       "eth_signer_random() for a throwaway key."
     ))
   }
-  return(EthSigner$new(private_key))
+  return(assert_return_eth_signer(EthSigner$new(private_key)))
 }
 
 #' Create an EthSigner with a Fresh Random Key
@@ -146,5 +151,5 @@ eth_signer <- function(private_key = Sys.getenv("ETH_PRIVATE_KEY")) {
 #'
 #' @export
 eth_signer_random <- function() {
-  return(EthSigner$new(eth_keygen()))
+  return(assert_return_eth_signer_random(EthSigner$new(eth_keygen())))
 }

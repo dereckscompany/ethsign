@@ -9,29 +9,24 @@
 #' load-time self-test (see `.onLoad()`) aborts if the system openssl ships a
 #' FIPS-202 SHA3 under this name.
 #'
-#' @param x A raw vector, or a length-1 character string (encoded as UTF-8
-#'   before hashing).
-#' @return A plain `raw(32)` digest (the `"hash"` class attribute is stripped).
+#' @param x (raw | scalar<character>) raw bytes, or a length-1 character string
+#'   (encoded as UTF-8 before hashing).
+#' @return (vector<raw, 32>) a plain `raw(32)` digest (the `"hash"` class
+#'   attribute is stripped).
 #'
 #' @examples
 #' keccak256("") # the empty-string Ethereum vector
 #' keccak256(as.raw(c(0x12, 0x34)))
 #'
 #' @importFrom openssl keccak
-#' @importFrom rlang abort
 #' @export
 keccak256 <- function(x) {
+  assert_args_keccak256(x)
   if (is.character(x)) {
-    if (length(x) != 1L) {
-      rlang::abort("keccak256(): character input must be length 1, e.g. keccak256(\"hello\").")
-    }
     x <- charToRaw(enc2utf8(x))
   }
-  if (!is.raw(x)) {
-    rlang::abort("keccak256(): `x` must be raw or character, e.g. keccak256(as.raw(c(0x12, 0x34))).")
-  }
   # c() strips the "hash" class attribute -> plain raw(32)
-  return(c(openssl::keccak(x, size = 256)))
+  return(assert_return_keccak256(c(openssl::keccak(x, size = 256))))
 }
 
 #' Keccak-256 as a Lowercase Hex String

@@ -156,14 +156,14 @@ eip712_signing_digest <- function(domain_separator, struct_hash) {
 #' `uint256`, `bool`, `address`, `bytes32`). Nested struct types and arrays are
 #' out of scope for v0.
 #'
-#' @param domain Named list; the EIP-712 domain, with `name` (character),
-#'   `version` (character), `chainId` (numeric or `gmp::bigz`), and
-#'   `verifyingContract` (a `0x`-prefixed 20-byte address).
-#' @param primary_type Character; the struct name, e.g. `"Order"`.
-#' @param types Unnamed list; the ordered field list for `primary_type`, each
-#'   element a `list(name = <chr>, type = <chr>)` in definition order.
-#' @param message Named list; field values, looked up by field name.
-#' @return `raw(32)`; the signing digest.
+#' @param domain (list) the EIP-712 domain, with `name` (character), `version`
+#'   (character), `chainId` (numeric or `gmp::bigz`), and `verifyingContract`
+#'   (a `0x`-prefixed 20-byte address).
+#' @param primary_type (scalar<character>) the struct name, e.g. `"Order"`.
+#' @param types (list) the ordered field list for `primary_type`, each element a
+#'   `list(name = <chr>, type = <chr>)` in definition order.
+#' @param message (list) field values, looked up by field name.
+#' @return (vector<raw, 32>) the signing digest.
 #'
 #' @examples
 #' domain <- list(
@@ -182,6 +182,7 @@ eip712_signing_digest <- function(domain_separator, struct_hash) {
 #' @importFrom rlang abort
 #' @export
 eip712_digest <- function(domain, primary_type, types, message) {
+  assert_args_eip712_digest(domain, primary_type, types, message)
   required <- c("name", "version", "chainId", "verifyingContract")
   if (!is.list(domain) || !all(required %in% names(domain))) {
     rlang::abort(paste0(
@@ -210,5 +211,5 @@ eip712_digest <- function(domain, primary_type, types, message) {
     verifying_contract = domain$verifyingContract
   )
   struct_hash <- eip712_hash_struct(primary_type, types, message)
-  return(eip712_signing_digest(domain_separator, struct_hash))
+  return(assert_return_eip712_digest(eip712_signing_digest(domain_separator, struct_hash)))
 }

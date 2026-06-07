@@ -7,11 +7,11 @@
 eth_address(private_key)
 }
 \arguments{
-\item{private_key}{Character or raw; the signing key, a \verb{0x}-prefixed 64-hex
-string or \code{raw(32)}.}
+\item{private_key}{(scalar<character> | vector<raw, 32>) the signing key, a
+\verb{0x}-prefixed 64-hex string or \code{raw(32)}.}
 }
 \value{
-Character; the lowercase \verb{0x}-prefixed 20-byte address.
+(scalar<character>) the lowercase \verb{0x}-prefixed 20-byte address.
 }
 \description{
 Derives the secp256k1 public key and returns its Ethereum address: the

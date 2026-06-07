@@ -26,32 +26,14 @@ new_eth_signature <- function(r, s, v) {
   return(out)
 }
 
-#' Assert an Object is an `eth_signature`
-#' @param sig The object to check.
-#' @param what Character; the calling function name for the error message.
-#' @return Invisibly `TRUE`; aborts otherwise.
-#' @importFrom rlang abort
-#' @keywords internal
-#' @noRd
-assert_eth_signature <- function(sig, what) {
-  if (!inherits(sig, "eth_signature")) {
-    rlang::abort(paste0(
-      what,
-      "(): `sig` must be an <eth_signature>, e.g. from ",
-      "eth_signer(...)$sign_digest(digest)."
-    ))
-  }
-  return(invisible(TRUE))
-}
-
 #' Project an `eth_signature` to its `{r, s, v}` Object Form
 #'
 #' Returns the signature as a `list(r, s, v)` with `r`/`s` as minimal `0x`-hex
 #' (leading zeros stripped, matching `eth_utils.to_hex`). This is the form
 #' venues such as Hyperliquid expect in the request body.
 #'
-#' @param sig An `eth_signature` from an [EthSigner].
-#' @return A `list(r = <0x-hex>, s = <0x-hex>, v = <integer>)`.
+#' @param sig (eth_signature) a signature from an [EthSigner].
+#' @return (list) a `list(r = <0x-hex>, s = <0x-hex>, v = <integer>)`.
 #'
 #' @examples
 #' sig <- eth_signer_random()$sign_message("gm")
@@ -59,12 +41,12 @@ assert_eth_signature <- function(sig, what) {
 #'
 #' @export
 as_rsv <- function(sig) {
-  assert_eth_signature(sig, "as_rsv")
-  return(list(
+  assert_args_as_rsv(sig)
+  return(assert_return_as_rsv(list(
     r = hex_minimal(sig$r),
     s = hex_minimal(sig$s),
     v = sig$v
-  ))
+  )))
 }
 
 #' Serialize an `eth_signature` to a 65-Byte Hex String
@@ -81,10 +63,10 @@ as_rsv <- function(sig) {
 #'
 #' @export
 as_hex <- function(sig) {
-  assert_eth_signature(sig, "as_hex")
+  assert_args_as_hex(sig)
   r <- sub("^0[xX]", "", sig$r)
   s <- sub("^0[xX]", "", sig$s)
-  return(paste0("0x", r, s, sprintf("%02x", sig$v)))
+  return(assert_return_as_hex(paste0("0x", r, s, sprintf("%02x", sig$v))))
 }
 
 #' Strip Leading Zeros from a `0x`-Hex String

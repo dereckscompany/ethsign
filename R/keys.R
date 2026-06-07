@@ -39,17 +39,18 @@ normalise_private_key <- function(x) {
 #' Derives the secp256k1 public key and returns its Ethereum address: the
 #' lowercase `0x`-prefixed last 20 bytes of `keccak256(pubkey_x || pubkey_y)`.
 #'
-#' @param private_key Character or raw; the signing key, a `0x`-prefixed 64-hex
-#'   string or `raw(32)`.
-#' @return Character; the lowercase `0x`-prefixed 20-byte address.
+#' @param private_key (scalar<character> | vector<raw, 32>) the signing key, a
+#'   `0x`-prefixed 64-hex string or `raw(32)`.
+#' @return (scalar<character>) the lowercase `0x`-prefixed 20-byte address.
 #'
 #' @examples
 #' eth_address("0x0123456789012345678901234567890123456789012345678901234567890123")
 #'
 #' @export
 eth_address <- function(private_key) {
+  assert_args_eth_address(private_key)
   priv32 <- normalise_private_key(private_key)
-  return(eth_address_from_pubkey(pubkey_from_priv(priv32)))
+  return(assert_return_eth_address(eth_address_from_pubkey(pubkey_from_priv(priv32))))
 }
 
 #' Generate a New Random Ethereum Private Key
@@ -59,7 +60,7 @@ eth_address <- function(private_key) {
 #' (astronomically improbable) draws outside the valid secp256k1 scalar range
 #' `(0, n)`.
 #'
-#' @return Character; a `0x`-prefixed 64-hex private key.
+#' @return (scalar<character>) a `0x`-prefixed 64-hex private key.
 #'
 #' @examples
 #' priv <- eth_keygen()
@@ -77,5 +78,5 @@ eth_keygen <- function() {
       break
     }
   }
-  return(key)
+  return(assert_return_eth_keygen(key))
 }

@@ -7,19 +7,19 @@
 eip712_digest(domain, primary_type, types, message)
 }
 \arguments{
-\item{domain}{Named list; the EIP-712 domain, with \code{name} (character),
-\code{version} (character), \code{chainId} (numeric or \code{gmp::bigz}), and
-\code{verifyingContract} (a \verb{0x}-prefixed 20-byte address).}
+\item{domain}{(list) the EIP-712 domain, with \code{name} (character), \code{version}
+(character), \code{chainId} (numeric or \code{gmp::bigz}), and \code{verifyingContract}
+(a \verb{0x}-prefixed 20-byte address).}
 
-\item{primary_type}{Character; the struct name, e.g. \code{"Order"}.}
+\item{primary_type}{(scalar<character>) the struct name, e.g. \code{"Order"}.}
 
-\item{types}{Unnamed list; the ordered field list for \code{primary_type}, each
-element a \verb{list(name = <chr>, type = <chr>)} in definition order.}
+\item{types}{(list) the ordered field list for \code{primary_type}, each element a
+\verb{list(name = <chr>, type = <chr>)} in definition order.}
 
-\item{message}{Named list; field values, looked up by field name.}
+\item{message}{(list) field values, looked up by field name.}
 }
 \value{
-\code{raw(32)}; the signing digest.
+(vector<raw, 32>) the signing digest.
 }
 \description{
 Hashes a single EIP-712 struct under its domain and returns the

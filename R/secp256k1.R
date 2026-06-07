@@ -263,12 +263,12 @@ ecdsa_sign_rfc6979 <- function(digest32, priv32, use_bits2octets = FALSE) {
 #' signature, recovers the Ethereum address that produced it. This is the
 #' inverse check against an [EthSigner]'s output, e.g. verifying a SIWE login.
 #'
-#' @param digest32 `raw(32)`; the signed message digest.
+#' @param digest32 (vector<raw, 32>) the signed message digest.
 #' @param r,s Signature scalars; a `gmp::bigz`, integer, `0x`-prefixed hex
 #'   string, or `raw(32)` (e.g. the `r`/`s` of [as_rsv()]).
 #' @param v Integer; the recovery byte, `27` or `28`.
-#' @return Character; the recovered lowercase `0x`-prefixed 20-byte address, or
-#'   `NULL` if recovery fails.
+#' @return (scalar<character> | NULL) the recovered lowercase `0x`-prefixed
+#'   20-byte address, or `NULL` if recovery fails.
 #'
 #' @examples
 #' priv <- "0x0123456789012345678901234567890123456789012345678901234567890123"
@@ -282,6 +282,7 @@ ecdsa_sign_rfc6979 <- function(digest32, priv32, use_bits2octets = FALSE) {
 #' @importFrom rlang abort
 #' @export
 ecrecover <- function(digest32, r, s, v) {
+  assert_args_ecrecover(digest32)
   p <- secp256k1_p
   n <- secp256k1_n
   G <- secp256k1_g
@@ -313,5 +314,5 @@ ecrecover <- function(digest32, r, s, v) {
     return(NULL)
   }
   pub65 <- c(as.raw(0x04), bigz2raw32(q$x), bigz2raw32(q$y))
-  return(eth_address_from_pubkey(pub65))
+  return(assert_return_ecrecover(eth_address_from_pubkey(pub65)))
 }

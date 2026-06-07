@@ -7,7 +7,7 @@
 ecrecover(digest32, r, s, v)
 }
 \arguments{
-\item{digest32}{\code{raw(32)}; the signed message digest.}
+\item{digest32}{(vector<raw, 32>) the signed message digest.}
 
 \item{r, s}{Signature scalars; a \code{gmp::bigz}, integer, \verb{0x}-prefixed hex
 string, or \code{raw(32)} (e.g. the \code{r}/\code{s} of \code{\link[=as_rsv]{as_rsv()}}).}
@@ -15,8 +15,8 @@ string, or \code{raw(32)} (e.g. the \code{r}/\code{s} of \code{\link[=as_rsv]{as
 \item{v}{Integer; the recovery byte, \code{27} or \code{28}.}
 }
 \value{
-Character; the recovered lowercase \verb{0x}-prefixed 20-byte address, or
-\code{NULL} if recovery fails.
+(scalar<character> | NULL) the recovered lowercase \verb{0x}-prefixed
+20-byte address, or \code{NULL} if recovery fails.
 }
 \description{
 Ethereum's \code{ecrecover}: given the signed digest and the \verb{(r, s, v)}
