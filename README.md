@@ -1,6 +1,10 @@
 
 # ethsign <img src="man/figures/logo.png" align="right" height="139" alt="ethsign hex sticker" />
 
+**ethsign creates the cryptographic signature a crypto wallet makes –
+the digital “stamp” that proves a request came from your wallet and
+authorizes it – directly from R.**
+
 Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
 secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation,
 EIP-712 typed-data signing, EIP-191 `personal_sign`, and address
@@ -40,8 +44,11 @@ other tooling.
 ## Installation
 
 ``` r
+renv::install("dereckscompany/ethsign")
+
+# or, if you use remotes instead of renv:
 # install.packages("remotes")
-remotes::install_github("dereckscompany/ethsign")
+# remotes::install_github("dereckscompany/ethsign")
 ```
 
 ## Quick start
@@ -57,7 +64,7 @@ read your key from the `ETH_PRIVATE_KEY` environment variable
 
 ``` r
 signer <- eth_signer(
-    "0x0123456789012345678901234567890123456789012345678901234567890123"
+  "0x0123456789012345678901234567890123456789012345678901234567890123"
 )
 
 # The address is derived from the key; the private key is never printed.
@@ -76,24 +83,24 @@ official Hyperliquid Python SDK testnet vector):
 
 ``` r
 domain <- list(
-    name = "HyperliquidSignTransaction",
-    version = "1",
-    chainId = 421614,
-    verifyingContract = "0x0000000000000000000000000000000000000000"
+  name = "HyperliquidSignTransaction",
+  version = "1",
+  chainId = 421614,
+  verifyingContract = "0x0000000000000000000000000000000000000000"
 )
 
 types <- list(
-    list(name = "hyperliquidChain", type = "string"),
-    list(name = "destination", type = "string"),
-    list(name = "amount", type = "string"),
-    list(name = "time", type = "uint64")
+  list(name = "hyperliquidChain", type = "string"),
+  list(name = "destination", type = "string"),
+  list(name = "amount", type = "string"),
+  list(name = "time", type = "uint64")
 )
 
 message <- list(
-    hyperliquidChain = "Testnet",
-    destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
-    amount = "1",
-    time = 1687816341423
+  hyperliquidChain = "Testnet",
+  destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
+  amount = "1",
+  time = 1687816341423
 )
 
 sig <- signer$sign_typed_data(domain, "HyperliquidTransaction:UsdSend", types, message)

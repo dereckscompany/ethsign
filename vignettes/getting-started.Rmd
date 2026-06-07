@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
 # Signing is OFFLINE and deterministic (RFC 6979): this vignette executes with
 # no network, no funds, and no chain connection. Every signature printed below
 # is the real, reproducible output of the code shown.
-library(ethsign)
+box::use(ethsign[eth_signer, eth_address, keccak256, eip712_digest, ecrecover, as_rsv, as_hex])
 ```
 
 `ethsign` provides the cryptographic primitives needed to sign Ethereum and EVM
@@ -39,8 +39,11 @@ up to your other tooling.
 ## Installation
 
 ```{r install, eval = FALSE}
+renv::install("dereckscompany/ethsign")
+
+# or, if you use remotes instead of renv:
 # install.packages("remotes")
-remotes::install_github("dereckscompany/ethsign")
+# remotes::install_github("dereckscompany/ethsign")
 ```
 
 ## Creating a signer

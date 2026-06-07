@@ -4,21 +4,23 @@ output: github_document
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-    warning = FALSE,
-    message = FALSE,
-    fig.path = "./man/figures/README-",
-    fig.align = "center",
-    collapse = TRUE,
-    comment = "#>"
+  warning = FALSE,
+  message = FALSE,
+  fig.path = "./man/figures/README-",
+  fig.align = "center",
+  collapse = TRUE,
+  comment = "#>"
 )
 
 # Every example below runs at render time. Signing is OFFLINE and deterministic
 # (RFC 6979), so the document executes with no network, no funds, and no chain
 # connection -- the printed signatures are the real, reproducible output.
-library(ethsign)
+box::use(ethsign[eth_signer, eth_address, keccak256, eip712_digest, ecrecover, as_rsv, as_hex])
 ```
 
 # ethsign <img src="man/figures/logo.png" align="right" height="139" alt="ethsign hex sticker" />
+
+**ethsign creates the cryptographic signature a crypto wallet makes -- the digital "stamp" that proves a request came from your wallet and authorizes it -- directly from R.**
 
 Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
 secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation, EIP-712
@@ -57,8 +59,11 @@ raw transaction, present it as a login -- is up to you and your other tooling.
 ## Installation
 
 ```{r install, eval = FALSE}
+renv::install("dereckscompany/ethsign")
+
+# or, if you use remotes instead of renv:
 # install.packages("remotes")
-remotes::install_github("dereckscompany/ethsign")
+# remotes::install_github("dereckscompany/ethsign")
 ```
 
 ## Quick start
@@ -73,7 +78,7 @@ generate a throwaway one with `eth_signer_random()`.
 
 ```{r signer}
 signer <- eth_signer(
-    "0x0123456789012345678901234567890123456789012345678901234567890123"
+  "0x0123456789012345678901234567890123456789012345678901234567890123"
 )
 
 # The address is derived from the key; the private key is never printed.
@@ -89,24 +94,24 @@ Hyperliquid Python SDK testnet vector):
 
 ```{r typed-data}
 domain <- list(
-    name = "HyperliquidSignTransaction",
-    version = "1",
-    chainId = 421614,
-    verifyingContract = "0x0000000000000000000000000000000000000000"
+  name = "HyperliquidSignTransaction",
+  version = "1",
+  chainId = 421614,
+  verifyingContract = "0x0000000000000000000000000000000000000000"
 )
 
 types <- list(
-    list(name = "hyperliquidChain", type = "string"),
-    list(name = "destination", type = "string"),
-    list(name = "amount", type = "string"),
-    list(name = "time", type = "uint64")
+  list(name = "hyperliquidChain", type = "string"),
+  list(name = "destination", type = "string"),
+  list(name = "amount", type = "string"),
+  list(name = "time", type = "uint64")
 )
 
 message <- list(
-    hyperliquidChain = "Testnet",
-    destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
-    amount = "1",
-    time = 1687816341423
+  hyperliquidChain = "Testnet",
+  destination = "0x5e9ee1089755c3435139848e47e6635505d5a13a",
+  amount = "1",
+  time = 1687816341423
 )
 
 sig <- signer$sign_typed_data(domain, "HyperliquidTransaction:UsdSend", types, message)
