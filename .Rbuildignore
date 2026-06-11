@@ -10,12 +10,13 @@
 ^docs$
 ^.*\.csv$
 ^local$
-^dev$
 ^scripts$
 ^README\.Rmd$
 ^README\.html$
 ^\.cruft\.json$
 ^\.lintr$
+^LICENSE$
+^\.clang-format$
 ^air\.toml$
 ^\.Rprofile$
 ^cran-comments\.md$
