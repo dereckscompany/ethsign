@@ -10,7 +10,8 @@ secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation,
 EIP-712 typed-data signing, EIP-191 `personal_sign`, and address
 derivation. These are the cryptographic primitives needed to
 authenticate and sign orders on EVM venues such as Hyperliquid and
-Polymarket, with no native dependencies beyond `gmp` and `openssl`.
+Polymarket, with no native dependencies beyond `gmp`, `openssl`, and
+`secretbase`.
 
 > **A note on responsibility.** This package handles private keys and
 > produces signatures that can authorize real transactions. You are
