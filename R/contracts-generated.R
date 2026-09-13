@@ -15,6 +15,20 @@ assert_return_eip712_digest <- function(value) {
   return(value)
 }
 
+assert_args_eip712_sign <- function(signer, domain, types, primary_type, message) {
+  assert_class(signer, "EthSigner")
+  assert_list(domain)
+  assert_list(types)
+  assert_scalar_character(primary_type)
+  assert_list(message)
+  return(invisible(NULL))
+}
+
+assert_return_eip712_sign <- function(value) {
+  assert_scalar_character(value)
+  return(value)
+}
+
 assert_args_keccak256 <- function(x) {
   assert_any_of(
     x,
@@ -49,6 +63,16 @@ assert_args_eth_address <- function(private_key) {
 }
 
 assert_return_eth_address <- function(value) {
+  assert_scalar_character(value)
+  return(value)
+}
+
+assert_args_eth_checksum_address <- function(address) {
+  assert_scalar_character(address)
+  return(invisible(NULL))
+}
+
+assert_return_eth_checksum_address <- function(value) {
   assert_scalar_character(value)
   return(value)
 }

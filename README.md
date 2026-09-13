@@ -163,6 +163,72 @@ eth_address("0x0123456789012345678901234567890123456789012345678901234567890123"
 #> [1] "0x14791697260e4c9a71f18484c9f997b308e59325"
 ```
 
+### Beyond one flat struct: Polymarket-shaped typed data
+
+Polymarket needs three things Hyperliquid’s messages never exercise: a
+domain that omits `verifyingContract` (three fields, not four – padding
+a phantom fourth field would sign a different message), integers bigger
+than a double can hold exactly, and a struct nested inside another.
+`eip712_digest()` (and `eip712_sign()`, its 65-byte-hex signing
+counterpart) handles all three:
+
+``` r
+# A three-field domain (no verifyingContract) -- Polymarket's ClobAuth login
+# message uses exactly this shape.
+clob_domain <- list(name = "ClobAuthDomain", version = "1", chainId = 137)
+clob_types <- list(
+  list(name = "address", type = "address"),
+  list(name = "timestamp", type = "string"),
+  list(name = "nonce", type = "uint256"),
+  list(name = "message", type = "string")
+)
+clob_message <- list(
+  address = signer$address,
+  timestamp = "1000000000",
+  nonce = 0,
+  message = "This message attests that I control the given wallet"
+)
+
+# eip712_sign() hashes, signs, and returns the wire-ready 65-byte hex form.
+eip712_sign(signer, clob_domain, clob_types, "ClobAuth", clob_message)
+#> [1] "0xe7c6fbeecdf8808308591bb8400b4262612d4ea0b19389d3db23562782906460517c2a5f1096d6e6be984d23f224afae8cfa536793d56ebc23dd3fdf8e4d2d211c"
+```
+
+``` r
+# A field typed as another struct (one level of nesting) hashes as that
+# struct's own hashStruct; a uintN field accepts a decimal string for values
+# past 2^53 (Polymarket's conditional-token ids run to 77-78 digits).
+types <- list(
+  Holder = list(list(name = "name", type = "string"), list(name = "wallet", type = "address")),
+  Position = list(
+    list(name = "holder", type = "Holder"),
+    list(name = "tokenId", type = "uint256")
+  )
+)
+message <- list(
+  holder = list(name = "Alice", wallet = signer$address),
+  tokenId = "13074185296307418529630741852963074185296307418529630741852963074185296307418"
+)
+domain <- list(
+  name = "Example", version = "1", chainId = 137,
+  verifyingContract = "0x0000000000000000000000000000000000000000"
+)
+
+eip712_digest(domain, "Position", types, message)
+#>  [1] 5d 0b 44 ee 0e d5 19 75 f0 9a 71 63 f7 b7 d4 e2 1d 86 dc bf ac 04 43 cd 04
+#> [26] 2f 63 6d f4 dd ee ff
+```
+
+### Checksummed addresses
+
+`eth_checksum_address()` applies EIP-55 mixed-case checksumming, so a
+mistyped or truncated address is caught before it is signed over:
+
+``` r
+eth_checksum_address("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+#> [1] "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"
+```
+
 ### Sign a login message (SIWE)
 
 `$sign_message()` applies the EIP-191 `personal_sign` prefix – the
@@ -184,8 +250,9 @@ cover the EIP-712 and EIP-191 signing required by, among others:
 - **Hyperliquid** user actions (`usdSend`, `withdraw`, approve-agent,
   and other user-signed actions) – verified against the official SDK
   vectors.
-- **Polymarket** order signing (CLOB orders, the 65-byte hex form via
-  `as_hex()`).
+- **Polymarket** order and login signing (CLOB `Order`s, the three-field
+  `ClobAuth` domain, and 77-digit conditional-token ids) – verified
+  against vectors from the official `py-clob-client`.
 - **0x**, **CoW Protocol**, **1inch**, and **Seaport** (OpenSea)
   order/intent signing.
 - **ERC-2612** and **Permit2** token permits.

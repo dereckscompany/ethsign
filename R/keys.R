@@ -53,6 +53,51 @@ eth_address <- function(private_key) {
   return(assert_return_eth_address(eth_address_from_pubkey(pubkey_from_priv(priv32))))
 }
 
+#' Checksum-Encode an Ethereum Address (EIP-55)
+#'
+#' Mixed-case checksum encoding: starting from the lowercase hex address,
+#' each hex digit that is a letter (`a`-`f`) is uppercased when the
+#' corresponding nibble of `keccak256()` of the lowercase hex STRING (its
+#' ASCII bytes, not the decoded address bytes) is `>= 8`. Wallets and block
+#' explorers use this to catch a mistyped or truncated address before it is
+#' used -- [eth_address()] and [eth_address_from_pubkey()] return the plain
+#' lowercase form; this adds the checksum casing on top.
+#'
+#' @param address (scalar<character>) a `0x`-prefixed 40-hex Ethereum
+#'   address, any case.
+#' @return (scalar<character>) the `0x`-prefixed EIP-55 checksummed address.
+#'
+#' @examples
+#' eth_checksum_address("0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed")
+#'
+#' @importFrom rlang abort
+#' @export
+eth_checksum_address <- function(address) {
+  assert_args_eth_checksum_address(address)
+  hex <- tolower(sub("^0[xX]", "", address))
+  if (!grepl("^[0-9a-f]{40}$", hex)) {
+    rlang::abort("eth_checksum_address(): `address` must be a 0x-prefixed 40-hex Ethereum address.")
+  }
+  hash_hex <- keccak256_hex(hex)
+  addr_chars <- strsplit(hex, "")[[1]]
+  hash_chars <- strsplit(hash_hex, "")[[1]]
+  checksummed <- vapply(
+    seq_along(addr_chars),
+    function(i) {
+      ch <- addr_chars[i]
+      if (!grepl("[a-f]", ch)) {
+        return(ch)
+      }
+      if (strtoi(hash_chars[i], 16L) >= 8L) {
+        return(toupper(ch))
+      }
+      return(ch)
+    },
+    character(1)
+  )
+  return(assert_return_eth_checksum_address(paste0("0x", paste(checksummed, collapse = ""))))
+}
+
 #' Generate a New Random Ethereum Private Key
 #'
 #' Draws 32 cryptographically secure random bytes from [openssl::rand_bytes()]

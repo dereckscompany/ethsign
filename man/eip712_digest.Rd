@@ -7,30 +7,37 @@
 eip712_digest(domain, primary_type, types, message)
 }
 \arguments{
-\item{domain}{(list) the EIP-712 domain, with \code{name} (character), \code{version}
-(character), \code{chainId} (numeric or \code{gmp::bigz}), and \code{verifyingContract}
-(a \verb{0x}-prefixed 20-byte address).}
+\item{domain}{(list) the EIP-712 domain: a non-empty subset of \code{name}
+(character), \code{version} (character), \code{chainId} (numeric, a decimal/\verb{0x}
+string, or \code{gmp::bigz}), \code{verifyingContract} (a \verb{0x}-prefixed 20-byte
+address), and \code{salt} (\code{raw(32)}). Only the keys present are hashed, in
+canonical order -- e.g. Polymarket's \code{ClobAuth} domain omits
+\code{verifyingContract}.}
 
 \item{primary_type}{(scalar<character>) the struct name, e.g. \code{"Order"}.}
 
-\item{types}{(list) the ordered field list for \code{primary_type}, each element a
-\verb{list(name = <chr>, type = <chr>)} in definition order.}
+\item{types}{(list) either the field list for \code{primary_type} (an unnamed
+list of \code{list(name, type)}, in definition order), or -- when a field's
+type names another struct -- a named list mapping every referenced
+struct name (including \code{primary_type}) to its own field list.}
 
-\item{message}{(list) field values, looked up by field name.}
+\item{message}{(list) field values, looked up by field name. A field whose
+type names another struct holds that struct's own named list of values.}
 }
 \value{
 (vector<raw, 32>) the signing digest.
 }
 \description{
-Hashes a single EIP-712 struct under its domain and returns the
-\code{0x1901}-prefixed digest ready to sign (the value an \link{EthSigner} passes to
-\verb{$sign_digest()}). This is the standard typed-data digest used by EVM venues
-such as Hyperliquid and Polymarket.
+Hashes a struct under its domain and returns the \code{0x1901}-prefixed digest
+ready to sign (the value an \link{EthSigner} passes to \verb{$sign_digest()}). This
+is the standard typed-data digest used by EVM venues such as Hyperliquid
+and Polymarket.
 }
 \details{
-Scope: a single struct over atomic field types (\code{string}, \code{uint64},
-\code{uint256}, \code{bool}, \code{address}, \code{bytes32}). Nested struct types and arrays are
-out of scope for v0.
+Field types: \code{string}, \code{uintN} (N a multiple of 8 in 8..256), \code{bool},
+\code{address}, \code{bytes32}, and one level of struct nesting (a field whose type
+names another struct, e.g. an ERC-7739 \code{TypedDataSign} wrapper). Arrays are
+out of scope.
 }
 \examples{
 domain <- list(
