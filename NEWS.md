@@ -1,3 +1,41 @@
+# ethsign 0.2.0
+
+## In plain English
+
+This package's Polymarket test vectors were checking the wrong thing. They were generated from `py-clob-client`, the client Polymarket archived on 2026-05-25, and they describe the retired V1 exchange. Reading the live contracts on Polygon on 2026-09-16 shows the exchange now declares itself version `"2"`, and its order has a different set of fields. So every "verified against the official client" claim in 0.1.0 was verified against a client the venue had stopped using -- the vectors were internally consistent and green, and certified a signature no deployed contract would accept.
+
+The hashing code itself turns out to be correct: it needed no change at all. What changed is what it is checked against. 0.2.0 replaces the acceptance vectors with ones taken from the CURRENT official client and, independently, from the deployed contracts themselves.
+
+## The chain read this rests on
+
+`eip712Domain()` (EIP-5267, selector `0x84b0196e`) on both live exchange contracts, over a keyless Polygon RPC on 2026-09-16:
+
+| contract | address | name | version | chainId |
+| --- | --- | --- | --- | --- |
+| CTF Exchange | `0xE111180000d2663C0091e4f400237545B87B996B` | `Polymarket CTF Exchange` | `2` | 137 |
+| Neg Risk CTF Exchange | `0xe2222d279d744050d28e00520010520000310F59` | `Polymarket CTF Exchange` | `2` | 137 |
+
+The EIP-712 domain separator hashes the version **string**, so `"1"` and `"2"` are different domains and produce different digests from identical order fields.
+
+## Verification
+
+* **V2 acceptance vectors** (`tests/testthat/test-eip712-sign.R`). `Order` digests and signatures on both the standard and the neg-risk CTF Exchange V2, plus the three-field-domain `ClobAuth` digest and signature. Generated from `Polymarket/py-clob-client-v2` at commit `215fc63a8fd6ec3a10c7edb73997c9772d8686d3` (`py-clob-client-v2` 1.1.0, `eth-account` 0.14.0, `eth-abi` 6.0.0, `eth-utils` 6.0.0) by driving `ExchangeOrderBuilderV2` directly, with a throwaway unfunded key. Cross-checked against `Polymarket/py-sdk` at `579bb2e56be9cc5d152546985870ee6ad795ec52`, which agrees field for field.
+* **Anchored to the chain, not to an SDK.** Each pinned digest was independently obtained by calling `hashOrder(Order)` on the DEPLOYED exchange over a keyless Polygon RPC with the same field values. Contract and client agree byte for byte, so these vectors cannot drift with a client release.
+* **The contract's own typehash.** A test hashes the V2 `Order` type string and asserts it equals the `ORDER_TYPEHASH` literal that `ctf-exchange-v2`'s `Structs.sol` pins (commit `ccc0596074f4dfd62c944fbca4de252893b82b4b`), so a drift in `encodeType` fails before any signature does.
+* **A guard against the exact 0.1.0 mistake.** A test asserts that signing the same order under `version = "1"` and `version = "2"` gives different signatures.
+
+## The V2 `Order` struct
+
+Eleven fields, in this order, per `Structs.sol` and both python clients: `salt` (uint256), `maker` (address), `signer` (address), `tokenId` (uint256), `makerAmount` (uint256), `takerAmount` (uint256), `side` (uint8), `signatureType` (uint8), `timestamp` (uint256, unix **milliseconds**), `metadata` (bytes32), `builder` (bytes32).
+
+V1's `taker`, `expiration`, `nonce` and `feeRateBps` are gone from the signed struct. (`expiration` still travels in the `POST /order` wire body; it is simply not signed over.)
+
+## Compatibility
+
+No code changed -- `eip712_digest()`, `eip712_sign()` and every other exported function behave exactly as in 0.1.0, and the existing `bytes32` / `uintN` / `address` encoders already covered every V2 field type. This release is a correction to what the package is TESTED against.
+
+0.1.0's V1 vectors are retained, clearly labelled, in `tests/testthat/test-eip712-sign-v1-historical.R`. They are regression coverage of the hashing engine only and are explicitly **not** acceptance criteria: no signature under that domain can be accepted by any deployed Polymarket contract.
+
 # ethsign 0.1.0
 
 EIP-712 typed-data signing was previously narrow enough for Hyperliquid but too narrow for Polymarket: it only understood `uint64`/`uint256`, required a full four-field domain (Polymarket's login message has only three fields, and padding the missing one produces a signature for the wrong message), had no big-number safety net (a plain R number silently loses precision above about 9 quadrillion, and Polymarket's token ids run past that by 60 orders of magnitude), had no address checksum support, and could not sign a struct that contains another struct. This release removes all five limits, so the same general-purpose signer now covers both venues -- verified against real vectors from the official Polymarket python client, not just against itself.

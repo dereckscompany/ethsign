@@ -1,25 +1,48 @@
 # test-eip712-sign.R
-# eip712_sign() (item 6: a general signer returning the 65-byte r||s||v hex
-# form) against real Polymarket CLOB vectors, cross-checked against the
-# OFFICIAL python client rather than merely round-tripping through ethsign's
-# own code.
+# ACCEPTANCE vectors: eip712_sign() / eip712_digest() against the CTF Exchange
+# **V2** contracts that Polymarket actually runs today, cross-checked against
+# the OFFICIAL python client AND against the deployed contracts themselves --
+# never merely round-tripped through ethsign's own code.
 #
-# Provenance: vectors generated in a scratch venv --
-#   python3 -m venv pyclob && pip install py-clob-client
-#   (py_clob_client 0.34.6, py_order_utils 0.3.2, poly_eip712_structs 0.0.1,
-#   eth_account 0.14.0)
-# -- by constructing the same objects the SDK itself uses:
-#   * `py_order_utils.builders.OrderBuilder` for the `Order` struct (the
-#     "Polymarket CTF Exchange" domain, chain 137, and the standard vs.
-#     neg-risk exchange contract addresses from `py_clob_client.config`).
-#   * `py_clob_client.signing.model.ClobAuth` / `eip712.get_clob_auth_domain`
-#     for the login message (the "ClobAuthDomain" domain: name, version,
-#     chainId only -- NO verifyingContract, item 2's three-field-domain case).
-# All three were signed there with a fresh THROWAWAY private key generated in
-# that same script (never used anywhere else, unfunded); the key, the exact
-# generation script (gen_vectors.py), and its raw stdout are not committed,
-# only the resulting domain/types/message/signature vectors below.
+# Why this file was rewritten for 0.2.0
+# ------------------------------------
+# 0.1.0's vectors came from `py-clob-client`, which Polymarket ARCHIVED on
+# 2026-05-25. They pin `version = "1"` and the retired V1 exchange addresses.
+# Reading `eip712Domain()` (EIP-5267, selector 0x84b0196e) on the live
+# contracts on 2026-09-16 returns `version = "2"`, so the 0.1.0 vectors
+# describe a domain no deployed contract will ever accept. They are kept, for
+# hashing-engine regression only, in test-eip712-sign-v1-historical.R and are
+# NOT acceptance criteria for this package. THIS file is.
+#
+# Provenance of every byte below
+# ------------------------------
+# Ground-truth commits (read 2026-09-16):
+#   Polymarket/ctf-exchange-v2    ccc0596074f4dfd62c944fbca4de252893b82b4b
+#   Polymarket/py-clob-client-v2  215fc63a8fd6ec3a10c7edb73997c9772d8686d3
+#   Polymarket/py-sdk             579bb2e56be9cc5d152546985870ee6ad795ec52
+#
+# Generated in a scratch venv with a THROWAWAY key (below), by driving the
+# official client's own builder rather than reimplementing it:
+#   python3 -m venv venv
+#   ./venv/bin/pip install eth-account eth-abi eth-utils
+#   ./venv/bin/pip install ./py-clob-client-v2     # the commit above
+#   ./venv/bin/python gen_vectors.py
+# Package versions in that venv: py-clob-client-v2 1.1.0, eth-account 0.14.0,
+# eth-abi 6.0.0, eth-utils 6.0.0.
+#
+# `gen_vectors.py` builds `ExchangeOrderBuilderV2(contract_address, 137,
+# Signer(TESTKEY))` with a pinned salt and timestamp, then takes
+# `build_signed_order()` / `build_order_hash()`. The ClobAuth vector uses the
+# three-field `ClobAuthDomain` (name, version, chainId -- NO
+# verifyingContract), matching py-sdk's `_internal/l1_auth.py`.
+#
+# Independent confirmation (not from any client): each `digest` below was also
+# obtained by calling `hashOrder(Order)` on the DEPLOYED exchange over a
+# keyless Polygon RPC, with the same field values. Contract and client agree
+# byte for byte, so these vectors are anchored to the chain, not to an SDK.
 
+# THROWAWAY key: generated for vectors only, unfunded, never used anywhere
+# else, and deliberately committed so the vectors are reproducible.
 testkey <- "0xae6244eba76012e42c63632fd4b261fa3187490d282daeee64e4a30524639a3b"
 address <- "0xaefb910f214a73fb595efb5cb28c3e332914bf05" # eth_address() is lowercase
 
@@ -27,90 +50,141 @@ test_that("the throwaway signer address matches the python client's Account.from
   expect_equal(eth_address(testkey), address)
 })
 
-# ---- Order struct: field order and types exactly as py_order_utils'
-# `Order(EIP712Struct)` declares them (salt, maker, signer, taker, tokenId,
-# makerAmount, takerAmount, expiration, nonce, feeRateBps, side,
-# signatureType) -- see py_order_utils/model/order.py.
+# ---- The V2 `Order` struct ---------------------------------------------------
+# Field order and types exactly as the CONTRACT declares them in
+# ctf-exchange-v2's `Structs.sol` (`ORDER_TYPEHASH`'s own type string) and as
+# both python clients mirror them
+# (`py_clob_client_v2/order_utils/model/ctf_exchange_v2_typed_data.py`,
+# `py-sdk/_internal/actions/orders/typed_data.py`). ELEVEN fields:
+#   salt, maker, signer, tokenId, makerAmount, takerAmount, side,
+#   signatureType, timestamp, metadata, builder
+# There is NO `taker`, NO `expiration`, NO `nonce` and NO `feeRateBps` in V2:
+# those four were V1 fields. `expiration` still travels in the POST /order
+# wire body, but it is not signed over.
 
 order_types <- list(
   list(name = "salt", type = "uint256"),
   list(name = "maker", type = "address"),
   list(name = "signer", type = "address"),
-  list(name = "taker", type = "address"),
   list(name = "tokenId", type = "uint256"),
   list(name = "makerAmount", type = "uint256"),
   list(name = "takerAmount", type = "uint256"),
-  list(name = "expiration", type = "uint256"),
-  list(name = "nonce", type = "uint256"),
-  list(name = "feeRateBps", type = "uint256"),
   list(name = "side", type = "uint8"),
-  list(name = "signatureType", type = "uint8")
+  list(name = "signatureType", type = "uint8"),
+  list(name = "timestamp", type = "uint256"),
+  list(name = "metadata", type = "bytes32"),
+  list(name = "builder", type = "bytes32")
 )
 
-# A 77-digit synthetic CTF token id (item 3: decimal-string uintN input, far
-# past the 2^53 double-precision limit) -- real conditional-token ids run to
-# exactly this many digits.
+# A 77-digit synthetic CTF token id: a decimal-string uintN input far past the
+# 2^53 double-precision limit, exactly as real conditional-token ids are.
 big_token_id <- "13074185296307418529630741852963074185296307418529630741852963074185296307418"
 
 order_message <- list(
   salt = 12345,
   maker = "0xaeFB910F214a73FB595Efb5CB28c3e332914bF05",
   signer = "0xaeFB910F214a73FB595Efb5CB28c3e332914bF05",
-  taker = "0x0000000000000000000000000000000000000000",
   tokenId = big_token_id,
   makerAmount = 1000000,
   takerAmount = 1000000,
-  expiration = 0,
-  nonce = 0,
-  feeRateBps = 0,
   side = 0,
-  signatureType = 0
+  signatureType = 0,
+  timestamp = "1750000000000", # unix MILLIseconds -- V2 signs ms, not seconds
+  metadata = raw(32), # bytes32 zero, the client's own default
+  builder = raw(32) # bytes32 zero, the client's own default
 )
 
-test_that("eip712_sign reproduces py_order_utils' Order signature on the standard CTF Exchange", {
+test_that("the V2 Order type string hashes to the contract's own ORDER_TYPEHASH", {
+  # Structs.sol pins ORDER_TYPEHASH as a literal. If ethsign's encodeType ever
+  # drifts from the contract's own type string, this fails before any
+  # signature does.
+  type_string <- paste0(
+    "Order(uint256 salt,address maker,address signer,uint256 tokenId,",
+    "uint256 makerAmount,uint256 takerAmount,uint8 side,uint8 signatureType,",
+    "uint256 timestamp,bytes32 metadata,bytes32 builder)"
+  )
+  expect_equal(
+    paste(as.character(keccak256(type_string)), collapse = ""),
+    "bb86318a2138f5fa8ae32fbe8e659f8fcf13cc6ae4014a707893055433818589"
+  )
+})
+
+test_that("eip712_digest reproduces the standard CTF Exchange V2 order digest", {
+  # Also equals `hashOrder(order)` read straight off the deployed contract
+  # 0xE111180000d2663C0091e4f400237545B87B996B.
   domain <- list(
     name = "Polymarket CTF Exchange",
-    version = "1",
+    version = "2",
     chainId = 137,
-    verifyingContract = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E" # config.py CONFIG[137].exchange
+    verifyingContract = "0xE111180000d2663C0091e4f400237545B87B996B"
+  )
+  digest <- eip712_digest(domain, "Order", order_types, order_message)
+  expect_equal(
+    paste(as.character(digest), collapse = ""),
+    "355f1802671f2788e84349ff417cd009b0c5df506ca930f03afb2a6ff7d0471d"
+  )
+})
+
+test_that("eip712_sign reproduces py-clob-client-v2's Order signature on the standard CTF Exchange V2", {
+  domain <- list(
+    name = "Polymarket CTF Exchange",
+    version = "2",
+    chainId = 137,
+    verifyingContract = "0xE111180000d2663C0091e4f400237545B87B996B"
   )
   sig <- eip712_sign(eth_signer(testkey), domain, order_types, "Order", order_message)
   expect_match(sig, "^0x[0-9a-f]{130}$")
   expect_equal(
     sig,
     paste0(
-      "0x3e459c207244a8b6e95224a8277bd2ce028c7246fdace111340a235fb304c4a",
-      "a572e9ff30c9680de3fab18f2f806c26bf5711e8f9f44f93469a7b7a7acbd38c71c"
+      "0xb9f5e224748d09c3b3df516fd6842fc941c8ee21eaf86845763a416e1f77d5a5",
+      "7044a9964ac998af5e5a0495a8f393cf1f5502eff225ceed19a063c9c4d58a631b"
     )
   )
 })
 
-test_that("eip712_sign reproduces py_order_utils' Order signature on the neg-risk CTF Exchange", {
-  # Same order fields, only `verifyingContract` differs -- item 2's whole
-  # point: a wrong (e.g. zero-padded or swapped) verifyingContract gives a
-  # different, wrong signature. This is the independent proof it does not.
+test_that("eip712_digest reproduces the neg-risk CTF Exchange V2 order digest", {
+  # Also equals `hashOrder(order)` read off the deployed neg-risk exchange
+  # 0xe2222d279d744050d28e00520010520000310F59.
   domain <- list(
     name = "Polymarket CTF Exchange",
-    version = "1",
+    version = "2",
     chainId = 137,
-    verifyingContract = "0xC5d563A36AE78145C45a50134d48A1215220f80a" # config.py NEG_RISK_CONFIG[137].exchange
+    verifyingContract = "0xe2222d279d744050d28e00520010520000310F59"
+  )
+  digest <- eip712_digest(domain, "Order", order_types, order_message)
+  expect_equal(
+    paste(as.character(digest), collapse = ""),
+    "1210e487ae1758da37ebc616c749d937db021fb1d430ad1767c462502ec15223"
+  )
+})
+
+test_that("eip712_sign reproduces py-clob-client-v2's Order signature on the neg-risk CTF Exchange V2", {
+  # Same order fields; only `verifyingContract` differs. A wrong (e.g. swapped
+  # or zero-padded) verifyingContract gives a different, wrong signature --
+  # this is the independent proof it does not.
+  domain <- list(
+    name = "Polymarket CTF Exchange",
+    version = "2",
+    chainId = 137,
+    verifyingContract = "0xe2222d279d744050d28e00520010520000310F59"
   )
   sig <- eip712_sign(eth_signer(testkey), domain, order_types, "Order", order_message)
   expect_match(sig, "^0x[0-9a-f]{130}$")
   expect_equal(
     sig,
     paste0(
-      "0x9455237fa43d90d6ad3c7cd3dd15b86cae16ac6915255bb45c701efa84e4809",
-      "f3716b3b4f5e8bf02abbfaad3a3e20346362d655ec90c18d6b75a620fceed39031c"
+      "0x498024b023e2b67b8b29716ca46c16183485e16684fb7acaa664e9b0f9906e7b",
+      "2a311b7b905b873644c1f811b852f42d27df7cfc843f4d810467f02df0ca8cb41c"
     )
   )
   std_sig <- eip712_sign(
     eth_signer(testkey),
     list(
       name = "Polymarket CTF Exchange",
-      version = "1",
+      version = "2",
       chainId = 137,
-      verifyingContract = "0x4bFb41d5B3570DeFd03C39a9A4D8dE6Bd8B8982E"
+      verifyingContract = "0xE111180000d2663C0091e4f400237545B87B996B"
     ),
     order_types,
     "Order",
@@ -119,10 +193,31 @@ test_that("eip712_sign reproduces py_order_utils' Order signature on the neg-ris
   expect_false(identical(sig, std_sig))
 })
 
-# ---- ClobAuth: the three-field domain (item 2) -- name, version, chainId,
-# NO verifyingContract -- see py_clob_client/signing/{model,eip712}.py.
+test_that("the domain version is hashed: signing the same order under version 1 gives a different signature", {
+  # This is the whole 0.2.0 story in one assertion. The domain separator hashes
+  # the version STRING, so "1" and "2" are different domains. Everything
+  # 0.1.0's vectors certified was certified against a domain the deployed
+  # contracts reject.
+  v2 <- list(
+    name = "Polymarket CTF Exchange",
+    version = "2",
+    chainId = 137,
+    verifyingContract = "0xE111180000d2663C0091e4f400237545B87B996B"
+  )
+  v1 <- v2
+  v1$version <- "1"
+  expect_false(identical(
+    eip712_sign(eth_signer(testkey), v2, order_types, "Order", order_message),
+    eip712_sign(eth_signer(testkey), v1, order_types, "Order", order_message)
+  ))
+})
 
-test_that("eip712_digest reproduces py-clob-client's ClobAuth digest under a three-field domain", {
+# ---- ClobAuth: the three-field domain ---------------------------------------
+# name, version, chainId -- NO verifyingContract. Unchanged across the V2
+# cutover: py-sdk's `_internal/l1_auth.py` at the commit above still builds
+# exactly this domain, and these bytes are identical to 0.1.0's.
+
+test_that("eip712_digest reproduces py-sdk's ClobAuth digest under a three-field domain", {
   clob_domain <- list(name = "ClobAuthDomain", version = "1", chainId = 137)
   clob_types <- list(
     list(name = "address", type = "address"),
