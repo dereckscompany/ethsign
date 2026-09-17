@@ -16,14 +16,14 @@
 normalise_private_key <- function(x) {
   if (is.raw(x)) {
     if (length(x) != 32L) {
-      rlang::abort("`private_key` raw vector must be exactly 32 bytes.")
+      abort_ethsign_validation_error("`private_key` raw vector must be exactly 32 bytes.")
     }
     return(x)
   }
   if (is.character(x) && length(x) == 1L) {
     hex <- sub("^0[xX]", "", x)
     if (!grepl("^[0-9a-fA-F]{64}$", hex)) {
-      rlang::abort(paste0(
+      abort_ethsign_validation_error(paste0(
         "`private_key` must be a 64-character hex string (optionally ",
         "0x-prefixed) or raw(32), e.g. ",
         "\"0x0123456789012345678901234567890123456789012345678901234567890123\"."
@@ -31,7 +31,7 @@ normalise_private_key <- function(x) {
     }
     return(hex2raw(hex))
   }
-  rlang::abort("`private_key` must be a length-1 hex string or raw(32).")
+  return(abort_ethsign_validation_error("`private_key` must be a length-1 hex string or raw(32)."))
 }
 
 #' Derive an Ethereum Address from a Private Key
@@ -76,7 +76,7 @@ eth_checksum_address <- function(address) {
   assert_args_eth_checksum_address(address)
   hex <- tolower(sub("^0[xX]", "", address))
   if (!grepl("^[0-9a-f]{40}$", hex)) {
-    rlang::abort("eth_checksum_address(): `address` must be a 0x-prefixed 40-hex Ethereum address.")
+    abort_ethsign_validation_error("eth_checksum_address(): `address` must be a 0x-prefixed 40-hex Ethereum address.")
   }
   hash_hex <- keccak256_hex(hex)
   addr_chars <- strsplit(hex, "")[[1]]

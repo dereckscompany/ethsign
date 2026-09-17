@@ -130,7 +130,7 @@ EthSigner <- R6::R6Class(
 eth_signer <- function(private_key = Sys.getenv("ETH_PRIVATE_KEY")) {
   assert_args_eth_signer(private_key)
   if (is.character(private_key) && length(private_key) == 1L && !nzchar(private_key)) {
-    rlang::abort(paste0(
+    abort_ethsign_validation_error(paste0(
       "No private key provided. Set the ETH_PRIVATE_KEY environment variable, ",
       "pass `private_key=` (a 0x-prefixed 64-hex string or raw(32)), or use ",
       "eth_signer_random() for a throwaway key."
