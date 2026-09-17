@@ -113,10 +113,10 @@ eip712_coerce_uint <- function(value) {
   }
   if (is.numeric(value) && length(value) == 1L) {
     if (is.na(value)) {
-      rlang::abort("eip712: a uintN value must not be NA.")
+      abort_ethsign_encoding_error("eip712: a uintN value must not be NA.")
     }
     if (abs(value) > 2^53) {
-      rlang::abort(paste0(
+      abort_ethsign_encoding_error(paste0(
         "eip712: a numeric uintN value above 2^53 cannot be represented ",
         "exactly as an R double (got ",
         format(value, scientific = FALSE),
@@ -125,17 +125,17 @@ eip712_coerce_uint <- function(value) {
       ))
     }
     if (value != trunc(value)) {
-      rlang::abort("eip712: a uintN value must be a whole number.")
+      abort_ethsign_encoding_error("eip712: a uintN value must be a whole number.")
     }
     return(gmp::as.bigz(value))
   }
   if (is.character(value) && length(value) == 1L && grepl("^(0[xX][0-9a-fA-F]+|[0-9]+)$", value)) {
     return(gmp::as.bigz(value))
   }
-  rlang::abort(paste0(
+  return(abort_ethsign_encoding_error(paste0(
     "eip712: a uintN value must be a gmp::bigz, a whole number (abs <= ",
     "2^53), a decimal string, or a 0x-prefixed hex string."
-  ))
+  )))
 }
 
 #' Encode a Single EIP-712 Field Value to 32 Bytes
@@ -166,14 +166,14 @@ eip712_encode_value <- function(type, value, types_map = NULL) {
   }
   if (type == "bytes32") {
     if (!is.raw(value) || length(value) != 32) {
-      rlang::abort("eip712: a `bytes32` value must be raw(32).")
+      abort_ethsign_encoding_error("eip712: a `bytes32` value must be raw(32).")
     }
     return(value)
   }
   if (grepl("^uint[0-9]+$", type)) {
     n_bits <- as.integer(sub("^uint", "", type))
     if (n_bits %% 8 != 0 || n_bits < 8 || n_bits > 256) {
-      rlang::abort(paste0(
+      abort_ethsign_encoding_error(paste0(
         "eip712: unsupported field type '",
         type,
         "' (uintN needs N a ",
@@ -183,7 +183,7 @@ eip712_encode_value <- function(type, value, types_map = NULL) {
     bz <- eip712_coerce_uint(value)
     limit <- gmp::as.bigz(2)^n_bits
     if (bz < 0 || bz >= limit) {
-      rlang::abort(paste0(
+      abort_ethsign_encoding_error(paste0(
         "eip712: value out of range for ",
         type,
         " (must be in [0, 2^",
@@ -204,16 +204,16 @@ eip712_encode_value <- function(type, value, types_map = NULL) {
   if (type == "address") {
     b <- hex2raw(value)
     if (length(b) != 20) {
-      rlang::abort("eip712: an `address` value must be 20 bytes (a 0x-prefixed 40-hex string).")
+      abort_ethsign_encoding_error("eip712: an `address` value must be 20 bytes (a 0x-prefixed 40-hex string).")
     }
     return(c(raw(12), b)) # left-pad to 32
   }
-  rlang::abort(paste0(
+  return(abort_ethsign_encoding_error(paste0(
     "eip712: unsupported field type '",
     type,
     "'. Supported: string, bytes32, uintN (N a multiple of 8 in 8..256), ",
     "bool, address, or a struct name defined in `types`."
-  ))
+  )))
 }
 
 #' Hash an EIP-712 Struct
@@ -237,7 +237,7 @@ eip712_hash_struct <- function(primary_type, types_map, message) {
   data <- eip712_type_hash(primary_type, types_map)
   for (f in fields) {
     if (!f$name %in% names(message)) {
-      rlang::abort(paste0("eip712: message is missing field '", f$name, "'."))
+      abort_ethsign_encoding_error(paste0("eip712: message is missing field '", f$name, "'."))
     }
     data <- c(data, eip712_encode_value(f$type, message[[f$name]], types_map))
   }
@@ -273,7 +273,7 @@ EIP712_DOMAIN_FIELD_TYPES <- list(
 eip712_domain_fields <- function(domain) {
   present <- intersect(names(EIP712_DOMAIN_FIELD_TYPES), names(domain))
   if (length(present) == 0L) {
-    rlang::abort(paste0(
+    abort_ethsign_encoding_error(paste0(
       "eip712: `domain` must include at least one of name, version, ",
       "chainId, verifyingContract, salt."
     ))
@@ -334,7 +334,7 @@ eip712_normalise_types <- function(types, primary_type) {
     return(types_map)
   }
   if (!primary_type %in% names(types)) {
-    rlang::abort(paste0(
+    abort_ethsign_encoding_error(paste0(
       "eip712_digest(): `types` must include a definition for `primary_type` ",
       "('",
       primary_type,
@@ -390,7 +390,7 @@ eip712_normalise_types <- function(types, primary_type) {
 eip712_digest <- function(domain, primary_type, types, message) {
   assert_args_eip712_digest(domain, primary_type, types, message)
   if (!is.list(domain) || is.null(names(domain))) {
-    rlang::abort(paste0(
+    abort_ethsign_validation_error(paste0(
       "eip712_digest(): `domain` must be a named list containing a non-empty ",
       "subset of name, version, chainId, verifyingContract, salt, e.g. ",
       "list(name = \"Exchange\", version = \"1\", chainId = 1337, ",
@@ -399,7 +399,7 @@ eip712_digest <- function(domain, primary_type, types, message) {
   }
   unknown_domain_fields <- setdiff(names(domain), names(EIP712_DOMAIN_FIELD_TYPES))
   if (length(unknown_domain_fields) > 0L) {
-    rlang::abort(paste0(
+    abort_ethsign_validation_error(paste0(
       "eip712_digest(): unknown domain field(s): ",
       paste(unknown_domain_fields, collapse = ", "),
       ". Valid EIP712Domain fields: ",
@@ -408,17 +408,19 @@ eip712_digest <- function(domain, primary_type, types, message) {
     ))
   }
   if (!is.character(primary_type) || length(primary_type) != 1L) {
-    rlang::abort("eip712_digest(): `primary_type` must be a length-1 character string, e.g. \"Order\".")
+    abort_ethsign_validation_error(
+      "eip712_digest(): `primary_type` must be a length-1 character string, e.g. \"Order\"."
+    )
   }
   if (!is.list(types) || length(types) == 0L) {
-    rlang::abort(paste0(
+    abort_ethsign_validation_error(paste0(
       "eip712_digest(): `types` must be a non-empty unnamed list of ",
       "list(name=, type=) for `primary_type`, or a named list mapping every ",
       "referenced struct name to its own field list."
     ))
   }
   if (!is.list(message)) {
-    rlang::abort("eip712_digest(): `message` must be a named list of field values.")
+    abort_ethsign_validation_error("eip712_digest(): `message` must be a named list of field values.")
   }
   types_map <- eip712_normalise_types(types, primary_type)
   domain_separator <- eip712_domain_separator(domain)

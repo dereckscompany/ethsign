@@ -16,7 +16,7 @@ keccak256_self_test <- function() {
   got <- keccak256_hex("")
   want <- "c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
   if (!identical(got, want)) {
-    rlang::abort(paste0(
+    abort_ethsign_integrity_error(paste0(
       "keccak256 self-test FAILED: not the original Keccak-256 (got ",
       got,
       ")."

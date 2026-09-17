@@ -23,6 +23,7 @@ importFrom(gmp,powm)
 importFrom(openssl,rand_bytes)
 importFrom(openssl,sha256)
 importFrom(rlang,abort)
+importFrom(rlang,caller_env)
 importFrom(secretbase,keccak)
 
 # roxyassert @exportassert: begin (managed - do not edit)

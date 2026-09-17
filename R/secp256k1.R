@@ -144,7 +144,7 @@ ec_mul <- function(k, P) {
 pubkey_from_priv <- function(priv32) {
   d <- raw2bigz(priv32)
   if (d <= 0 || d >= secp256k1_n) {
-    rlang::abort("private key out of range (must be in (0, n) for secp256k1).")
+    abort_ethsign_validation_error("private key out of range (must be in (0, n) for secp256k1).")
   }
   Q <- ec_mul(d, secp256k1_g)
   return(c(as.raw(0x04), bigz2raw32(Q$x), bigz2raw32(Q$y)))
@@ -237,11 +237,11 @@ ecdsa_sign_rfc6979 <- function(digest32, priv32, use_bits2octets = FALSE) {
   R <- ec_mul(k, secp256k1_g)
   r <- gmp::mod.bigz(R$x, n)
   if (r == 0) {
-    rlang::abort("ecdsa: r == 0 (astronomically unlikely; would need nonce retry).")
+    abort_ethsign_signing_error("ecdsa: r == 0 (astronomically unlikely; would need nonce retry).")
   }
   s <- gmp::mod.bigz(gmp::inv.bigz(k, n) * (z + r * d), n)
   if (s == 0) {
-    rlang::abort("ecdsa: s == 0 (astronomically unlikely; would need nonce retry).")
+    abort_ethsign_signing_error("ecdsa: s == 0 (astronomically unlikely; would need nonce retry).")
   }
   # recovery id bit 0 = parity of R.y. (Bit 1 would flag R.x >= n, which has
   # probability ~2^-128 -- ignored here, as libsecp256k1 callers also do.)
@@ -290,7 +290,7 @@ ecrecover <- function(digest32, r, s, v) {
   s <- as_scalar_bigz(s)
   recid <- as.integer(v) - 27L
   if (!recid %in% c(0L, 1L)) {
-    rlang::abort("ecrecover: `v` must be 27 or 28.")
+    abort_ethsign_validation_error("ecrecover: `v` must be 27 or 28.")
   }
   x <- r # (the r >= n branch with x = r + n is ignored, prob ~2^-128)
   y2 <- gmp::mod.bigz(x^3 + 7, p)

@@ -1,3 +1,24 @@
+# ethsign 0.2.1
+
+## In plain English
+
+This is a fleet housekeeping release: it changes how the package reports its own errors and how its documentation gets built, not what the package computes. Every error the package raises is now labelled with a class, so calling code can catch "this was a bad address" separately from "this couldn't be signed" instead of matching on the wording of a message. Separately, the script that regenerates the package's documentation was missing an option needed to pick up the `EthSigner` class's own per-method checks, so those checks could silently stop being regenerated; the script now matches the rest of the fleet and keeps that option on.
+
+## Typed error conditions
+
+All 27 `rlang::abort()` calls across `eip712.R`, `keys.R`, `secp256k1.R`, `signer.R` and `zzz.R` now go through one of four typed raisers in the new `R/conditions.R`, each signalling a condition classed under a shared `ethsign_error` domain root:
+
+* `ethsign_validation_error` -- a public function's own argument, or a private-key / address / recovery-byte value, is malformed before any cryptographic work happens.
+* `ethsign_encoding_error` -- a value cannot be encoded into the EIP-712 wire representation being hashed.
+* `ethsign_signing_error` -- the ECDSA signing computation hits the astronomically unlikely `r == 0` / `s == 0` degenerate case.
+* `ethsign_integrity_error` -- the package's own load-time Keccak-256 self-test fails.
+
+Every message string is byte-identical to the bare `rlang::abort()` call it replaces, so existing `expect_error(..., regexp = ...)` checks are unaffected. `tests/testthat/test-conditions.R` adds class-based coverage for all four kinds, driven through the real abort sites (two of them, the signing and integrity kinds, via mocked lower-level primitives, since their triggering conditions cannot be reached with real inputs).
+
+## Documentation build
+
+`scripts/BUILD.sh`'s `cmd_document()` now sets `options(keep.source = TRUE, keep.source.pkgs = TRUE)` before calling `devtools::document()`, matching the sibling connectors. Without it, `roxyassert`'s contract roclet can silently fail to generate the per-method `assert_args_EthSigner__*` contracts for the `EthSigner` R6 class.
+
 # ethsign 0.2.0
 
 ## In plain English
