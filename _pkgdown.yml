@@ -43,7 +43,7 @@ reference:
       - eth_checksum_address
 
   - title: Signatures
-    desc: The canonical signature object and its two wire serializations
+    desc: The canonical signature object and its two wire serialisations
     contents:
       - eth_signature
       - as_rsv

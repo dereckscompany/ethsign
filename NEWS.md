@@ -3,8 +3,8 @@
 **A prose sweep tidied leftover formatting labels and a handful of American spellings in the docs.** This file used to introduce some of its own explanations with a redundant "In plain English" label or heading; those are gone now, and the sentences and paragraphs they sat in front of are unchanged. Separately, a few American spellings in the README, the vignette, and three roxygen comments -- mostly the words "authorize" and "serialize" and their derived forms -- are now spelled the British way, matching the rest of the package's prose.
 
 - 3 scaffolding labels removed from `NEWS.md`: one inline "In plain English:" lead-in (0.2.2) and two "## In plain English" headings (0.2.1, 0.2.0); the paragraphs they introduced moved up under their version heading unchanged.
-- 12 spellings changed to their British form across `README.Rmd`, `NEWS.md`, `vignettes/getting-started.Rmd`, `R/signature.R`, `R/signer.R` and `R/types.R`: authorize/authorizes -> authorise/authorises; serialize/serializes/serializers -> serialise/serialises/serialisers; and the README's `## License` heading -> `## Licence`.
-- `README.md` and the three affected `man/*.Rd` pages (`EthSigner.Rd`, `as_hex.Rd`, `eth_signature.Rd`) regenerated from the edited `README.Rmd` and roxygen comments; 11 files touched in total.
+- 14 spellings changed to their British form across `README.Rmd`, `NEWS.md`, `vignettes/getting-started.Rmd`, `R/signature.R`, `R/signer.R`, `R/types.R` and `_pkgdown.yml`: authorize/authorizes -> authorise/authorises; serialize/serializes/serializers/serializations -> serialise/serialises/serialisers/serialisations; and the README's `## License` heading -> `## Licence`.
+- `README.md` and the three affected `man/*.Rd` pages (`EthSigner.Rd`, `as_hex.Rd`, `eth_signature.Rd`) regenerated from the edited `README.Rmd` and roxygen comments; 12 files touched in total.
 - No exported identifiers, argument names, URLs, or the `LICENSE` file itself were touched; `R CMD`-level tests, `FORMAT.sh` and `LINT.sh` all pass unchanged.
 
 # ethsign 0.2.2
