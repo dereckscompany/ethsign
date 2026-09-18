@@ -5,7 +5,7 @@
 #'
 #' An S3 object of class `eth_signature` holding the `(r, s, v)` triple as
 #' `r`/`s` 0x-hex strings and an integer recovery byte `v`. Referenced by the
-#' [EthSigner] signing methods and the [as_rsv()] / [as_hex()] serializers.
+#' [EthSigner] signing methods and the [as_rsv()] / [as_hex()] serialisers.
 #'
 #' @type eth_signature (class<eth_signature>)
 #' @genassert

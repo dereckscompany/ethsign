@@ -3,7 +3,7 @@
 
 **ethsign creates the cryptographic signature a crypto wallet makes –
 the digital “stamp” that proves a request came from your wallet and
-authorizes it – directly from R.**
+authorises it – directly from R.**
 
 Pure-R Ethereum and EVM wallet signing primitives: keccak-256 hashing,
 secp256k1 ECDSA with the Ethereum recovery id and low-s normalisation,
@@ -14,7 +14,7 @@ Polymarket, with no native dependencies beyond `gmp`, `openssl`, and
 `secretbase`.
 
 > **A note on responsibility.** This package handles private keys and
-> produces signatures that can authorize real transactions. You are
+> produces signatures that can authorise real transactions. You are
 > responsible for how you use it and for keeping your keys safe.
 
 ## What this is — and what it is NOT
@@ -114,7 +114,7 @@ sig
 
 ### Two wire formats
 
-The same signature serializes to either venue convention:
+The same signature serialises to either venue convention:
 
 ``` r
 # {r, s, v} object form, e.g. Hyperliquid
@@ -272,7 +272,7 @@ cover the EIP-712 and EIP-191 signing required by, among others:
   different cryptography (Stark-friendly curves, Cosmos ADR-036) and are
   not EVM secp256k1 signing.
 
-## License
+## Licence
 
 MIT © Dereck Mezquita. Provided “as is”, without warranty of any kind;
 see `LICENSE`. You are responsible for how you use this software and for

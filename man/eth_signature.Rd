@@ -6,6 +6,6 @@
 \description{
 An S3 object of class \code{eth_signature} holding the \verb{(r, s, v)} triple as
 \code{r}/\code{s} 0x-hex strings and an integer recovery byte \code{v}. Referenced by the
-\link{EthSigner} signing methods and the \code{\link[=as_rsv]{as_rsv()}} / \code{\link[=as_hex]{as_hex()}} serializers.
+\link{EthSigner} signing methods and the \code{\link[=as_rsv]{as_rsv()}} / \code{\link[=as_hex]{as_hex()}} serialisers.
 }
 \keyword{internal}

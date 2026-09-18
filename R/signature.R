@@ -1,14 +1,14 @@
 # File: R/signature.R
-# The canonical signature object and its serializers. An `eth_signature` is an
+# The canonical signature object and its serialisers. An `eth_signature` is an
 # S3 list(r = <0x-hex>, s = <0x-hex>, v = <int 27|28>) with r/s stored as full
-# 32-byte zero-padded hex (the lossless canonical form); the serializers project
+# 32-byte zero-padded hex (the lossless canonical form); the serialisers project
 # it onto the two venue wire formats.
 
 #' Construct an `eth_signature`
 #'
 #' Builds the canonical signature object from the `(r, s, v)` triple produced by
 #' [ecdsa_sign_rfc6979()]. `r`/`s` are stored as `0x`-prefixed 32-byte
-#' zero-padded hex so both serializers ([as_rsv()], [as_hex()]) derive cleanly.
+#' zero-padded hex so both serialisers ([as_rsv()], [as_hex()]) derive cleanly.
 #'
 #' @param r,s Signature scalars; a `gmp::bigz`, integer, hex string, or
 #'   `raw(32)`.
@@ -49,7 +49,7 @@ as_rsv <- function(sig) {
   )))
 }
 
-#' Serialize an `eth_signature` to a 65-Byte Hex String
+#' Serialise an `eth_signature` to a 65-Byte Hex String
 #'
 #' Returns `0x` + 130 hex characters: `r(32) || s(32) || v(1)`, with `v` as
 #' `27`/`28`. This is the concatenated form venues such as Polymarket expect.

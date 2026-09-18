@@ -14,7 +14,7 @@ key is normalised to \code{raw(32)} at construction, never exposed by any public
 member, and never printed. Construct one with \code{\link[=eth_signer]{eth_signer()}} (from an env var
 or an explicit key) or \code{\link[=eth_signer_random]{eth_signer_random()}} (a throwaway key).
 
-All signing methods return an \link{eth_signature}; serialize it with \code{\link[=as_rsv]{as_rsv()}}
+All signing methods return an \link{eth_signature}; serialise it with \code{\link[=as_rsv]{as_rsv()}}
 (the \verb{\{r, s, v\}} object form, e.g. Hyperliquid) or \code{\link[=as_hex]{as_hex()}} (the 65-byte
 concatenated form, e.g. Polymarket).
 }

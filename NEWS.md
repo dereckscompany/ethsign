@@ -1,13 +1,20 @@
+# ethsign 0.2.3
+
+**A prose sweep tidied leftover formatting labels and a handful of American spellings in the docs.** This file used to introduce some of its own explanations with a redundant "In plain English" label or heading; those are gone now, and the sentences and paragraphs they sat in front of are unchanged. Separately, a few American spellings in the README, the vignette, and three roxygen comments -- mostly the words "authorize" and "serialize" and their derived forms -- are now spelled the British way, matching the rest of the package's prose.
+
+- 3 scaffolding labels removed from `NEWS.md`: one inline "In plain English:" lead-in (0.2.2) and two "## In plain English" headings (0.2.1, 0.2.0); the paragraphs they introduced moved up under their version heading unchanged.
+- 12 spellings changed to their British form across `README.Rmd`, `NEWS.md`, `vignettes/getting-started.Rmd`, `R/signature.R`, `R/signer.R` and `R/types.R`: authorize/authorizes -> authorise/authorises; serialize/serializes/serializers -> serialise/serialises/serialisers; and the README's `## License` heading -> `## Licence`.
+- `README.md` and the three affected `man/*.Rd` pages (`EthSigner.Rd`, `as_hex.Rd`, `eth_signature.Rd`) regenerated from the edited `README.Rmd` and roxygen comments; 11 files touched in total.
+- No exported identifiers, argument names, URLs, or the `LICENSE` file itself were touched; `R CMD`-level tests, `FORMAT.sh` and `LINT.sh` all pass unchanged.
+
 # ethsign 0.2.2
 
-**Two exported functions were missing from the reference index.** In plain English: the built documentation site's function list left out `eip712_sign()` and `eth_checksum_address()` even though both are exported and already documented, so anyone browsing the site's reference page would not find them there. This release only touches the site's navigation configuration; the functions themselves and their documentation are unchanged.
+**Two exported functions were missing from the reference index.** The built documentation site's function list left out `eip712_sign()` and `eth_checksum_address()` even though both are exported and already documented, so anyone browsing the site's reference page would not find them there. This release only touches the site's navigation configuration; the functions themselves and their documentation are unchanged.
 
 - Added `eip712_sign` to the "Hashing & EIP-712" section and `eth_checksum_address` to the "Keys & Addresses" section of `_pkgdown.yml`.
 - Verified with `pkgdown::check_pkgdown()`, which now reports no problems.
 
 # ethsign 0.2.1
-
-## In plain English
 
 This is a fleet housekeeping release: it changes how the package reports its own errors and how its documentation gets built, not what the package computes. Every error the package raises is now labelled with a class, so calling code can catch "this was a bad address" separately from "this couldn't be signed" instead of matching on the wording of a message. Separately, the script that regenerates the package's documentation was missing an option needed to pick up the `EthSigner` class's own per-method checks, so those checks could silently stop being regenerated; the script now matches the rest of the fleet and keeps that option on.
 
@@ -27,8 +34,6 @@ Every message string is byte-identical to the bare `rlang::abort()` call it repl
 `scripts/BUILD.sh`'s `cmd_document()` now sets `options(keep.source = TRUE, keep.source.pkgs = TRUE)` before calling `devtools::document()`, matching the sibling connectors. Without it, `roxyassert`'s contract roclet can silently fail to generate the per-method `assert_args_EthSigner__*` contracts for the `EthSigner` R6 class.
 
 # ethsign 0.2.0
-
-## In plain English
 
 This package's Polymarket test vectors were checking the wrong thing. They were generated from `py-clob-client`, the client Polymarket archived on 2026-05-25, and they describe the retired V1 exchange. Reading the live contracts on Polygon on 2026-09-16 shows the exchange now declares itself version `"2"`, and its order has a different set of fields. So every "verified against the official client" claim in 0.1.0 was verified against a client the venue had stopped using -- the vectors were internally consistent and green, and certified a signature no deployed contract would accept.
 
@@ -110,7 +115,7 @@ Initial release: pure-R Ethereum and EVM wallet signing primitives.
   `uint256`, `bool`, `address`, `bytes32`).
 * **Keys & addresses**: `eth_keygen()` for a fresh random private key and
   `eth_address()` for address derivation from a key.
-* **Signatures**: the canonical `eth_signature` object with two serializations
+* **Signatures**: the canonical `eth_signature` object with two serialisations
   -- `as_rsv()` (the `{r, s, v}` object form, e.g. Hyperliquid) and `as_hex()`
   (the 65-byte concatenated form, e.g. Polymarket).
 * **Verification**: `ecrecover()` recovers the signing address from a digest and

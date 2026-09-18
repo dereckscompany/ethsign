@@ -1,6 +1,6 @@
 Package: ethsign
 Title: Ethereum Signing Primitives
-Version: 0.2.2
+Version: 0.2.3
 URL: https://dereckscompany.github.io/ethsign,
     https://github.com/dereckscompany/ethsign
 BugReports: https://github.com/dereckscompany/ethsign/issues
