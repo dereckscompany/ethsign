@@ -1,3 +1,10 @@
+# ethsign 0.2.2
+
+**Two exported functions were missing from the reference index.** In plain English: the built documentation site's function list left out `eip712_sign()` and `eth_checksum_address()` even though both are exported and already documented, so anyone browsing the site's reference page would not find them there. This release only touches the site's navigation configuration; the functions themselves and their documentation are unchanged.
+
+- Added `eip712_sign` to the "Hashing & EIP-712" section and `eth_checksum_address` to the "Keys & Addresses" section of `_pkgdown.yml`.
+- Verified with `pkgdown::check_pkgdown()`, which now reports no problems.
+
 # ethsign 0.2.1
 
 ## In plain English

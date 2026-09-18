@@ -33,12 +33,14 @@ reference:
     contents:
       - keccak256
       - eip712_digest
+      - eip712_sign
 
   - title: Keys & Addresses
     desc: Private-key generation and Ethereum address derivation
     contents:
       - eth_keygen
       - eth_address
+      - eth_checksum_address
 
   - title: Signatures
     desc: The canonical signature object and its two wire serializations
