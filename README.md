@@ -29,6 +29,22 @@ Polymarket, with no native dependencies beyond `gmp`, `openssl`, and
   serialisations (`{r, s, v}` and 65-byte concatenated hex) venues
   expect.
 
+## Design philosophy
+
+- **Deterministic, offline signing.** Every signature is produced
+  locally under RFC 6979 deterministic nonces – no network, no funds,
+  and no chain connection, so the same input always produces the same,
+  reproducible signature.
+- **The private key never leaves the signer.** `EthSigner` normalises
+  the key to `raw(32)` at construction; it is never exposed by any
+  public member and never printed.
+- **Pure R, no compiled code.** No native dependencies beyond `gmp`,
+  `openssl`, and `secretbase`.
+
+> **A note on responsibility.** This package handles private keys and
+> produces signatures that can authorise real transactions. You are
+> responsible for how you use it and for keeping your keys safe.
+
 ## What this is — and what it is NOT
 
 `ethsign` is the signing **maths** plus a small signer object that holds
@@ -53,22 +69,6 @@ It **does**:
 What you do with the resulting signature – post it to a venue, embed it
 in a raw transaction, present it as a login – is up to you and your
 other tooling.
-
-## Design philosophy
-
-- **Deterministic, offline signing.** Every signature is produced
-  locally under RFC 6979 deterministic nonces – no network, no funds,
-  and no chain connection, so the same input always produces the same,
-  reproducible signature.
-- **The private key never leaves the signer.** `EthSigner` normalises
-  the key to `raw(32)` at construction; it is never exposed by any
-  public member and never printed.
-- **Pure R, no compiled code.** No native dependencies beyond `gmp`,
-  `openssl`, and `secretbase`.
-
-> **A note on responsibility.** This package handles private keys and
-> produces signatures that can authorise real transactions. You are
-> responsible for how you use it and for keeping your keys safe.
 
 ## Installation
 
