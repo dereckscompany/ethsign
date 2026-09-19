@@ -33,7 +33,7 @@ that holds a private key in memory. What you do with the resulting signature is
 up to your other tooling.
 
 > **A note on responsibility.** This package handles private keys and produces
-> signatures that can authorize real transactions. You are responsible for how
+> signatures that can authorise real transactions. You are responsible for how
 > you use it and for keeping your keys safe.
 
 ## Installation
@@ -133,7 +133,7 @@ digest <- eip712_digest(domain, "HyperliquidTransaction:UsdSend", types, message
 digest
 ```
 
-## The two serializations
+## The two serialisations
 
 A signature is the same object regardless of venue; only the wire format
 differs. `as_rsv()` gives the `{r, s, v}` object form (e.g. Hyperliquid, with

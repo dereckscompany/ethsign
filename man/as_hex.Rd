@@ -2,7 +2,7 @@
 % Please edit documentation in R/signature.R
 \name{as_hex}
 \alias{as_hex}
-\title{Serialize an \code{eth_signature} to a 65-Byte Hex String}
+\title{Serialise an \code{eth_signature} to a 65-Byte Hex String}
 \usage{
 as_hex(sig)
 }

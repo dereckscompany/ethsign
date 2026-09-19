@@ -10,7 +10,7 @@
 #' member, and never printed. Construct one with [eth_signer()] (from an env var
 #' or an explicit key) or [eth_signer_random()] (a throwaway key).
 #'
-#' All signing methods return an [eth_signature]; serialize it with [as_rsv()]
+#' All signing methods return an [eth_signature]; serialise it with [as_rsv()]
 #' (the `{r, s, v}` object form, e.g. Hyperliquid) or [as_hex()] (the 65-byte
 #' concatenated form, e.g. Polymarket).
 #'
