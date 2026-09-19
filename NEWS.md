@@ -1,3 +1,13 @@
+# ethsign 0.2.4
+
+**The README is reshaped into the fleet's standard layout.** Nothing the package computes has changed; the document that explains it now reads in the same order as every other package's README, so someone who already knows one can find their way around this one. A new Technical overview and Design philosophy summarise, in one place, capabilities and decisions that used to be scattered through the opening paragraph, and two new sections, Documentation and Citation, point readers at the rendered reference site, the vignette, and how to cite the package.
+
+- Inserted `## Technical overview` (a bulleted capability list drawn from the existing lead paragraph, the EIP-712 walkthrough, and the vignette) and `## Design philosophy` (deterministic offline signing, the private key never leaving the signer, pure R with no compiled code) between the plain-English lead and the existing "What this is -- and what it is NOT" section; the responsibility note moved from a blockquote under the lead into Design philosophy.
+- Added `## Error handling`, naming the `ethsign_error` condition taxonomy (`ethsign_validation_error`, `ethsign_encoding_error`, `ethsign_signing_error`, `ethsign_integrity_error`) that `R/conditions.R` already raises but the README never described.
+- Added `## Documentation` (the pkgdown site and the `getting-started` vignette) and `## Citation` (built from `DESCRIPTION`'s `Authors@R`, `Title`, and `Version`), both new to this README.
+- No heading was renamed, no prose was reworded, and no code chunk's options, `eval` flags, or fixtures changed; `## Installation`, `## Quick start`, `## Use cases` and `## Licence` are unchanged apart from their new position in the file.
+- `README.md` regenerated from the edited `README.Rmd` via `scripts/BUILD.sh readme`.
+
 # ethsign 0.2.3
 
 **A prose sweep tidied leftover formatting labels and a handful of American spellings in the docs.** This file used to introduce some of its own explanations with a redundant "In plain English" label or heading; those are gone now, and the sentences and paragraphs they sat in front of are unchanged. Separately, a few American spellings in the README, the vignette, and three roxygen comments -- mostly the words "authorize" and "serialize" and their derived forms -- are now spelled the British way, matching the rest of the package's prose.
