@@ -13,9 +13,21 @@ authenticate and sign orders on EVM venues such as Hyperliquid and
 Polymarket, with no native dependencies beyond `gmp`, `openssl`, and
 `secretbase`.
 
-> **A note on responsibility.** This package handles private keys and
-> produces signatures that can authorise real transactions. You are
-> responsible for how you use it and for keeping your keys safe.
+## Technical overview
+
+- Keccak-256 hashing (the original, pre-FIPS-202 variant Ethereum uses,
+  not SHA3-256).
+- secp256k1 ECDSA signing with the Ethereum recovery id and EIP-2 low-s
+  normalisation, deterministic under RFC 6979.
+- EIP-712 typed-data digests and signing, including a domain that omits
+  `verifyingContract`, a struct field nested inside another, and
+  `uint256` values past `2^53` (passed as decimal strings).
+- EIP-191 `personal_sign` digests, the basis of Sign-In with Ethereum
+  and most “sign this message to log in” flows.
+- Address derivation and EIP-55 checksummed addresses.
+- `ecrecover()` signature-to-address recovery, and the two wire
+  serialisations (`{r, s, v}` and 65-byte concatenated hex) venues
+  expect.
 
 ## What this is — and what it is NOT
 
@@ -41,6 +53,22 @@ It **does**:
 What you do with the resulting signature – post it to a venue, embed it
 in a raw transaction, present it as a login – is up to you and your
 other tooling.
+
+## Design philosophy
+
+- **Deterministic, offline signing.** Every signature is produced
+  locally under RFC 6979 deterministic nonces – no network, no funds,
+  and no chain connection, so the same input always produces the same,
+  reproducible signature.
+- **The private key never leaves the signer.** `EthSigner` normalises
+  the key to `raw(32)` at construction; it is never exposed by any
+  public member and never printed.
+- **Pure R, no compiled code.** No native dependencies beyond `gmp`,
+  `openssl`, and `secretbase`.
+
+> **A note on responsibility.** This package handles private keys and
+> produces signatures that can authorise real transactions. You are
+> responsible for how you use it and for keeping your keys safe.
 
 ## Installation
 
@@ -271,6 +299,38 @@ cover the EIP-712 and EIP-191 signing required by, among others:
 - **StarkEx / zk / Cosmos venues** – dYdX, Paradex, ApeX, Lighter – use
   different cryptography (Stark-friendly curves, Cosmos ADR-036) and are
   not EVM secp256k1 signing.
+
+## Error handling
+
+Every failure the package raises is a classed condition under one domain
+root, `ethsign_error`: `ethsign_validation_error` (a bad argument, key,
+address, or recovery byte, before any cryptographic work happens),
+`ethsign_encoding_error` (a value cannot be encoded into the EIP-712
+wire representation being hashed), `ethsign_signing_error` (the ECDSA
+computation hits its astronomically unlikely degenerate case), and
+`ethsign_integrity_error` (the package’s own load-time Keccak-256
+self-test fails). Catch a specific kind with `tryCatch()`, or the whole
+family with `ethsign_error`, instead of matching on message text.
+
+## Documentation
+
+The rendered reference site is at
+<https://dereckscompany.github.io/ethsign>.
+
+The vignette ladder, in reading order:
+
+- `vignette("getting-started", package = "ethsign")` – the same signing
+  walkthrough as Quick start, told as one continuous narrative: creating
+  a signer, hashing, EIP-712 typed-data signing, the two wire
+  serialisations, verifying with `ecrecover`, and signing a login
+  message.
+
+Release history is in [`NEWS.md`](NEWS.md).
+
+## Citation
+
+Cite as: Mezquita, D. (2026). Ethereum Signing Primitives. R package
+version 0.2.4. <https://github.com/dereckscompany/ethsign>
 
 ## Licence
 
