@@ -1,3 +1,11 @@
+# ethsign 0.2.5
+
+**A development-only dependency that nothing in the package ever used has been removed from the declared dependencies; the package computes exactly what it did before.** `DT` (an HTML table widget) was listed under `Suggests`, so anyone installing the package's optional extras was asked to install it for no reason. Nothing in the code, tests, vignette or README refers to it.
+
+- `DESCRIPTION`: `DT` dropped from `Suggests`; version bumped 0.2.4 -> 0.2.5. Evidence (fleet clean-up plan D.1-36): zero references to `DT` in `R/`, `tests/`, `vignettes/`, `README.Rmd` or `man/`.
+- `README.Rmd` / `README.md`: the hand-typed "Cite as" line now names 0.2.5.
+- `renv.lock` is not touched in this release (it is only ever changed with `renv::record()`); it still lists `DT` as a recorded package until the next deliberate re-lock.
+
 # ethsign 0.2.4
 
 **The README is reshaped into the fleet's standard layout.** Nothing the package computes has changed; the document that explains it now reads in the same order as every other package's README, so someone who already knows one can find their way around this one. A new Technical overview and Design philosophy summarise, in one place, capabilities and decisions that used to be scattered through the opening paragraph, and two new sections, Documentation and Citation, point readers at the rendered reference site, the vignette, and how to cite the package.

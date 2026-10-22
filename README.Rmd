@@ -286,7 +286,7 @@ Release history is in [`NEWS.md`](NEWS.md).
 
 ## Citation
 
-Cite as: Mezquita, D. (2026). Ethereum Signing Primitives. R package version 0.2.4. https://github.com/dereckscompany/ethsign
+Cite as: Mezquita, D. (2026). Ethereum Signing Primitives. R package version 0.2.5. https://github.com/dereckscompany/ethsign
 
 ## Licence
 
